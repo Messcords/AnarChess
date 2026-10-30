@@ -3,7 +3,6 @@
 ## Jeu
 
 - En tant que joueur, je veux pouvoir voir le plateau et ses pièces afin de connaître l'état de la partie.
-- En tant que joueur, je veux déplacer les pièces conformément à leurs règles afin de jouer une partie d’échecs.
 - En tant que joueur, je veux déplacer une de mes pièces d’une case à une autre afin de jouer mon tour.
 - En tant que joueur, je veux que les pièces respectent leurs règles de déplacement afin de jouer une vraie partie d’échecs.
 - En tant que joueur, je veux affronter un autre joueur humain afin de jouer avec quelqu’un.
