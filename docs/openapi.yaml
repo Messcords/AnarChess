@@ -1,0 +1,184 @@
+# =============================================================================
+#  CADRE D'APPRENTISSAGE — Contrat OpenAPI (endpoints indispensables uniquement)
+# =============================================================================
+#  Périmètre : stories Must seulement (US1, US2a, US2b, US3, US4, US5).
+#  5 endpoints, pas un de plus :
+#
+#    POST /boards                 créer une partie          (US2a)
+#    POST /boards/{id}/join       rejoindre une partie      (US3)
+#    GET  /boards/{id}            voir le plateau + issue   (US1, US5)
+#    POST /boards/{id}/moves      jouer un coup             (US2a, US2b)
+#    GET  /boards/{id}/events     voir les événements       (US4)
+#
+#  Pour chaque endpoint, réponds à 4 questions avant d'écrire :
+#    1. Qui appelle ?
+#    2. Qu'envoie-t-il ?
+#    3. Que reçoit-il si tout va bien ?
+#    4. Qu'est-ce qui peut mal tourner ? (un code d'erreur par cas)
+#
+#  Vérifie le fichier à chaque étape sur https://editor.swagger.io
+# =============================================================================
+
+openapi: 3.1.0
+info:
+  title: TODO
+  version: 0.1.0
+
+servers:
+  - url: TODO
+
+paths:
+
+  # ---------------------------------------------------------------------------
+  # 1 — POST /boards  (US2a)
+  # ---------------------------------------------------------------------------
+  # QUESTIONS :
+  #  - Pourquoi POST et pas GET ? 200 ou 201 ?
+  #  - Que doit recevoir le créateur pour pouvoir jouer ensuite ?
+  #    (il n'y a pas de compte : comment le reconnaître ?)
+  /boards:
+    post:
+      summary: TODO
+      responses:
+        TODO:
+          description: TODO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerAccess'
+
+  # ---------------------------------------------------------------------------
+  # 2 — POST /boards/{id}/join  (US3)
+  # ---------------------------------------------------------------------------
+  # QUESTIONS :
+  #  - Le joueur qui rejoint reçoit-il la même chose que le créateur ?
+  #  - Que répondre si la partie est déjà complète ? Si elle n'existe pas ?
+  /boards/{id}/join:
+    post:
+      summary: TODO
+      parameters:
+        - $ref: '#/components/parameters/BoardId'
+      responses:
+        TODO: {}
+        # TODO : partie complète ?
+        # TODO : partie introuvable ?
+
+  # ---------------------------------------------------------------------------
+  # 3 — GET /boards/{id}  (US1 + US5)
+  # ---------------------------------------------------------------------------
+  # QUESTIONS :
+  #  - De quoi l'écran Plateau a-t-il besoin pour s'afficher ?
+  #  - Comment savoir si la partie est en attente, en cours ou terminée ?
+  #  - Où mettre le résultat (gagnant, raison) ? Quand est-il présent ?
+  #  - Pourquoi un seul endpoint suffit pour US1 et US5 ?
+  /boards/{id}:
+    get:
+      summary: TODO
+      parameters:
+        - $ref: '#/components/parameters/BoardId'
+      responses:
+        '200':
+          description: TODO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Board'
+        # TODO : partie introuvable ?
+
+  # ---------------------------------------------------------------------------
+  # 4 — POST /boards/{id}/moves  (US2a + US2b)
+  # ---------------------------------------------------------------------------
+  # QUESTIONS :
+  #  - Un coup, c'est quoi au minimum ?
+  #  - Comment le serveur sait-il QUI joue ? (header ? body ?)
+  #  - Que renvoyer après un coup accepté ? (le nouveau plateau ? les événements ?)
+  #  - Un code par erreur :
+  #      joueur non reconnu ?  pas son tour / partie finie ?  coup illégal ?
+  #    (compare 400 et 422 : lequel pour un coup illégal, et pourquoi ?)
+  /boards/{id}/moves:
+    post:
+      summary: TODO
+      parameters:
+        - $ref: '#/components/parameters/BoardId'
+        # TODO : identité du joueur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveRequest'
+      responses:
+        TODO: {}
+        # TODO : erreurs
+
+  # ---------------------------------------------------------------------------
+  # 5 — GET /boards/{id}/events  (US4)
+  # ---------------------------------------------------------------------------
+  # QUESTIONS :
+  #  - Quelle différence entre un coup et un événement ?
+  #  - Quels types d'événements ? (coup, capture, action du Bouffon, fin de partie…)
+  #  - Comment décrire l'EFFET d'un événement sur le plateau ?
+  #  - Comment ne récupérer que les nouveaux événements ?
+  /boards/{id}/events:
+    get:
+      summary: TODO
+      parameters:
+        - $ref: '#/components/parameters/BoardId'
+        # TODO : filtre pour les nouveaux événements
+      responses:
+        '200':
+          description: TODO
+          # TODO : une liste d'Event
+
+components:
+
+  parameters:
+    BoardId:
+      name: id
+      in: TODO              # path, query ou header ?
+      required: TODO
+      schema: { type: string }
+
+  schemas:
+
+    Square:
+      type: string
+      # TODO : un "pattern" qui n'accepte que a1 à h8
+
+    Piece:
+      type: object
+      required: []          # TODO
+      properties: {}        # TODO
+      # QUESTION : le Bouffon est-il une pièce, un joueur, ou les deux ?
+
+    Board:
+      type: object
+      required: []          # TODO
+      properties: {}        # TODO : état ? tour ? pièces ? résultat ?
+
+    PlayerAccess:
+      type: object
+      properties: {}        # TODO : ce que reçoit un joueur pour jouer
+
+    MoveRequest:
+      type: object
+      required: []          # TODO
+      properties: {}        # TODO
+
+    Event:
+      type: object
+      properties: {}        # TODO
+
+    Error:
+      type: object
+      properties: {}        # TODO : format d'erreur commun à tous les endpoints
+
+# =============================================================================
+#  CHECKLIST
+# =============================================================================
+#  [ ] Chaque story Must est couverte par au moins un des 5 endpoints
+#  [ ] Chaque endpoint a son code de succès ET ses codes d'erreur
+#  [ ] Aucun endpoint ne demande de compte (authentification = Won't)
+#  [ ] Les schémas sont réutilisés avec $ref, pas copiés
+#  [ ] Le fichier passe sans erreur dans Swagger Editor
+# =============================================================================
