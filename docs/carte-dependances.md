@@ -17,9 +17,11 @@ Les stories sont listées dans un ordre de livraison valide : une story n'appara
 | Story | Priorité | Dépend de | Écran | Endpoint |
 | --- | --- | --- | --- | --- |
 | **US1** — En tant que joueur, je veux pouvoir voir le plateau et ses pièces afin de connaître l'état de la partie | Must | — | Plateau | `GET /boards/{id}/status` |
-| **US2** — En tant que joueur, je veux déplacer les pièces conformément à leurs règles afin de jouer une partie d'échecs | Must | US1 | Plateau | `POST /boards`<br>`POST /boards/{id}/moves` |
-| **US4** — En tant que joueur, je veux consulter les événements et leurs effets sur le plateau afin de comprendre ce qui se passe pendant la partie | Must | US2, US1 | Plateau | `GET /boards/{id}/events` |
+| **US2a** — En tant que joueur, je veux déplacer mes pièces afin de jouer mon tour | Must | US1 | Plateau | `POST /boards`<br>`POST /boards/{id}/moves` |
+| **US2b** — En tant que joueur, je veux que les pièces respectent leurs règles de déplacement afin de jouer une vraie partie d'échecs | Must | US2a | Plateau | `POST /boards/{id}/moves` |
 | **US3** — En tant que joueur, je veux affronter un autre joueur humain afin de jouer avec quelqu'un | Must | US2, US1 | Lobby, Plateau | `POST /boards/{id}/join`<br>`WS /boards/{id}` |
+| **US4** — En tant que joueur, je veux consulter les événements et leurs effets sur le plateau afin de comprendre ce qui se passe pendant la partie | Must | US2, US1 | Plateau | `GET /boards/{id}/events` |
+
 | **US5** — En tant que joueur, je veux que la partie se termine lorsqu'un joueur n'a plus de pièce sur le plateau afin que la victoire soit déterminée clairement | Must | US1, US2 | Plateau, Résultat | `GET /boards/{id}` |
 | **US6** — En tant que joueur, je veux que l'issue d'une partie puisse dépendre de règles spécifiques afin de varier les conditions de victoire | Should | US5 | Résultat | `GET /rulesets`<br>`POST /boards` (paramètre `ruleset`) |
 | **US9** — En tant que joueur, je veux me connecter afin de suivre mes statistiques | Won't | US5 | Connexion, Profil | `POST /auth/login`<br>`GET /players/me/stats` |
