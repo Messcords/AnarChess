@@ -17,13 +17,14 @@ Les stories sont listées dans un ordre de livraison valide : une story n'appara
 | Story | Priorité | Dépend de | Écran | Endpoint |
 | --- | --- | --- | --- | --- |
 | **US1** — En tant que joueur, je veux déplacer les pièces conformément à leurs règles afin de jouer une partie d'échecs | Must | — | Plateau | `POST /games`<br>`POST /games/{id}/moves` |
-| **US3** — En tant que joueur, je veux consulter les événements et leurs effets sur le plateau afin de comprendre ce qui se passe pendant la partie | Must | US1 | Plateau | `GET /games/{id}/events` |
-| **US2** — En tant que joueur, je veux affronter un autre joueur humain afin de jouer avec quelqu'un | Must | US1 | Lobby, Plateau | `POST /games/{id}/join`<br>`WS /games/{id}` |
-| **US4** — En tant que joueur, je veux que la partie se termine lorsqu'un joueur n'a plus de pièce sur le plateau afin que la victoire soit déterminée clairement | Must | US1 | Plateau, Résultat | `GET /games/{id}` |
-| **US5** — En tant que joueur, je veux que l'issue d'une partie puisse dépendre de règles spécifiques afin de varier les conditions de victoire | Should | US4 | Résultat | `GET /rulesets`<br>`POST /games` (paramètre `ruleset`) |
-| **US8** — En tant que joueur, je veux me connecter afin de suivre mes statistiques | Won't | US4 | Connexion, Profil | `POST /auth/login`<br>`GET /players/me/stats` |
-| **US6** — En tant que joueur, je veux affronter différents Bouffons afin de progresser dans le mode histoire | Won't | US5 | Carte des Bouffons | `GET /story/jesters`<br>`POST /story/jesters/{id}/games` |
-| **US7** — En tant que joueur, je veux affronter des joueurs de niveau Elo similaire afin de progresser dans le classement | Won't | US2, US8 | File d'attente, Classement | `POST /matchmaking/queue`<br>`GET /leaderboard` |
+| **US2** — En tant que joueur, je veux déplacer les pièces conformément à leurs règles afin de jouer une partie d'échecs | Must | US1 | Plateau | `POST /games`<br>`POST /games/{id}/moves` |
+| **US4** — En tant que joueur, je veux consulter les événements et leurs effets sur le plateau afin de comprendre ce qui se passe pendant la partie | Must | US2, US1 | Plateau | `GET /games/{id}/events` |
+| **US3** — En tant que joueur, je veux affronter un autre joueur humain afin de jouer avec quelqu'un | Must | US2, US1 | Lobby, Plateau | `POST /games/{id}/join`<br>`WS /games/{id}` |
+| **US5** — En tant que joueur, je veux que la partie se termine lorsqu'un joueur n'a plus de pièce sur le plateau afin que la victoire soit déterminée clairement | Must | US1, US2 | Plateau, Résultat | `GET /games/{id}` |
+| **US6** — En tant que joueur, je veux que l'issue d'une partie puisse dépendre de règles spécifiques afin de varier les conditions de victoire | Should | US5 | Résultat | `GET /rulesets`<br>`POST /games` (paramètre `ruleset`) |
+| **US9** — En tant que joueur, je veux me connecter afin de suivre mes statistiques | Won't | US5 | Connexion, Profil | `POST /auth/login`<br>`GET /players/me/stats` |
+| **US7** — En tant que joueur, je veux affronter différents Bouffons afin de progresser dans le mode histoire | Won't | US6 | Carte des Bouffons | `GET /story/jesters`<br>`POST /story/jesters/{id}/games` |
+| **US8** — En tant que joueur, je veux affronter des joueurs de niveau Elo similaire afin de progresser dans le classement | Won't | US3, US9 | File d'attente, Classement | `POST /matchmaking/queue`<br>`GET /leaderboard` |
 
 ### Légende des priorités (MoSCoW)
 
