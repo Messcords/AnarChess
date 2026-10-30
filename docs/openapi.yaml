@@ -29,8 +29,27 @@ servers:
 
 paths:
 
+
   # ---------------------------------------------------------------------------
-  # 1 — POST /boards  (US2a)
+  # 1 — POST /boards  (US1)
+  # ---------------------------------------------------------------------------
+  /boards/{id}/status:
+    get:
+      summary: Game status 
+      responses:
+        '200':
+          description: Affiche le plateau de jeu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerAccess'
+        '400':
+          description: Erreur récupération de la partie
+        '404':
+          description: Plateau inexistant
+  
+  # ---------------------------------------------------------------------------
+  # 2 — POST /boards  (US2)
   # ---------------------------------------------------------------------------
   # QUESTIONS :
   #  - Pourquoi POST et pas GET ? 200 ou 201 ?
@@ -38,15 +57,13 @@ paths:
   #    (il n'y a pas de compte : comment le reconnaître ?)
   /boards:
     post:
-      summary: TODO
+      summary: Création du salon
       responses:
-        TODO:
-          description: TODO
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerAccess'
-
+        '201':
+          description: Creation réussi
+        '400':
+          description: Création échouée
+          
   # ---------------------------------------------------------------------------
   # 2 — POST /boards/{id}/join  (US3)
   # ---------------------------------------------------------------------------
@@ -55,13 +72,20 @@ paths:
   #  - Que répondre si la partie est déjà complète ? Si elle n'existe pas ?
   /boards/{id}/join:
     post:
-      summary: TODO
+      summary: Join a lobby
       parameters:
-        - $ref: '#/components/parameters/BoardId'
+        - $ref: '#/components/parameters/LobbyId'
       responses:
-        TODO: {}
-        # TODO : partie complète ?
-        # TODO : partie introuvable ?
+        '200':
+          description: Affiche le salon
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lobby'
+        '400':
+          description: Impossible de rejoindre le salon
+        '404':
+          description: Salon inexistant
 
   # ---------------------------------------------------------------------------
   # 3 — GET /boards/{id}  (US1 + US5)
@@ -73,17 +97,14 @@ paths:
   #  - Pourquoi un seul endpoint suffit pour US1 et US5 ?
   /boards/{id}:
     get:
-      summary: TODO
+      summary: End game
       parameters:
         - $ref: '#/components/parameters/BoardId'
       responses:
         '200':
-          description: TODO
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Board'
-        # TODO : partie introuvable ?
+          description: Fin de jeu
+        '400':
+          description: Erreur lors de la fin de jeu
 
   # ---------------------------------------------------------------------------
   # 4 — POST /boards/{id}/moves  (US2a + US2b)
@@ -95,12 +116,12 @@ paths:
   #  - Un code par erreur :
   #      joueur non reconnu ?  pas son tour / partie finie ?  coup illégal ?
   #    (compare 400 et 422 : lequel pour un coup illégal, et pourquoi ?)
-  /boards/{id}/moves:
+  /boards/{id}/player/{id}/moves:
     post:
-      summary: TODO
+      summary: Move a piece across the board
       parameters:
         - $ref: '#/components/parameters/BoardId'
-        # TODO : identité du joueur
+        - $ref: '#/components/parameters/PlayerId'
       requestBody:
         required: true
         content:
@@ -108,35 +129,29 @@ paths:
             schema:
               $ref: '#/components/schemas/MoveRequest'
       responses:
-        TODO: {}
-        # TODO : erreurs
-
-  # ---------------------------------------------------------------------------
-  # 5 — GET /boards/{id}/events  (US4)
-  # ---------------------------------------------------------------------------
-  # QUESTIONS :
-  #  - Quelle différence entre un coup et un événement ?
-  #  - Quels types d'événements ? (coup, capture, action du Bouffon, fin de partie…)
-  #  - Comment décrire l'EFFET d'un événement sur le plateau ?
-  #  - Comment ne récupérer que les nouveaux événements ?
-  /boards/{id}/events:
-    get:
-      summary: TODO
-      parameters:
-        - $ref: '#/components/parameters/BoardId'
-        # TODO : filtre pour les nouveaux événements
-      responses:
         '200':
-          description: TODO
-          # TODO : une liste d'Event
+          description: Movement de la pièce réussi
+        '400':
+          description: Erreur lors du mouvement de la pièce
 
 components:
 
   parameters:
     BoardId:
       name: id
-      in: TODO              # path, query ou header ?
-      required: TODO
+      in: path              # path, query ou header ?
+      required: true
+      schema: { type: string }
+
+    LobbyId:
+      name: id
+      in: path              # path, query ou header ?
+      required: true
+      schema: { type: string }
+    PlayerId:
+      name: id
+      in: path              # path, query ou header ?
+      required: true
       schema: { type: string }
 
   schemas:
