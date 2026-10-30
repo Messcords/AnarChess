@@ -16,7 +16,7 @@ Les stories sont listées dans un ordre de livraison valide : une story n'appara
 
 | Story | Priorité | Dépend de | Écran | Endpoint |
 | --- | --- | --- | --- | --- |
-| **US1** — En tant que joueur, je veux déplacer les pièces conformément à leurs règles afin de jouer une partie d'échecs | Must | — | Plateau | `POST /games`<br>`POST /games/{id}/moves` |
+| **US1** — En tant que joueur, je veux pouvoir voir le plateau et ses pièces afin de connaître l'état de la partie | Must | — | Plateau | `GET /games`<br>`POST /games/{id}/status` |
 | **US2** — En tant que joueur, je veux déplacer les pièces conformément à leurs règles afin de jouer une partie d'échecs | Must | US1 | Plateau | `POST /games`<br>`POST /games/{id}/moves` |
 | **US4** — En tant que joueur, je veux consulter les événements et leurs effets sur le plateau afin de comprendre ce qui se passe pendant la partie | Must | US2, US1 | Plateau | `GET /games/{id}/events` |
 | **US3** — En tant que joueur, je veux affronter un autre joueur humain afin de jouer avec quelqu'un | Must | US2, US1 | Lobby, Plateau | `POST /games/{id}/join`<br>`WS /games/{id}` |
