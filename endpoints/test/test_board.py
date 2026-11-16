@@ -1,8 +1,10 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from main import app
 
 
+@pytest.mark.contract("createBoard")
 def test_create_board_returns_player_access() -> None:
     with TestClient(app) as client:
         response = client.post("/boards")
@@ -27,6 +29,7 @@ def test_create_board_returns_player_access() -> None:
     assert player_access["token"].startswith("tok_")
 
 
+@pytest.mark.contract("createBoard")
 def test_create_board_rejects_invalid_parameters() -> None:
     with TestClient(app) as client:
         response = client.post("/boards", json={"includeJester": False})
@@ -35,6 +38,7 @@ def test_create_board_rejects_invalid_parameters() -> None:
     assert response.json() == {"detail": "Invalid request parameters"}
 
 
+@pytest.mark.contract("getBoardState")
 def test_get_board_state() -> None:
     with TestClient(app) as client:
         invalid_response = client.get(f"/boards/{'x' * 65}")

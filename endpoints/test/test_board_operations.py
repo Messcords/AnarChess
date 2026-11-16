@@ -1,10 +1,12 @@
 from copy import deepcopy
 
+import pytest
 from fastapi.testclient import TestClient
 
 from main import app
 
 
+@pytest.mark.contract("joinBoard", "createBoard")
 def test_join_roles_and_capacity() -> None:
     with TestClient(app) as client:
         white = client.post("/boards").json()
@@ -35,6 +37,7 @@ def test_join_roles_and_capacity() -> None:
         assert client.post("/boards", content="{").status_code == 400
 
 
+@pytest.mark.contract("updateBoardState", "resetBoard", "joinBoard")
 def test_update_and_reset_board() -> None:
     with TestClient(app) as client:
         white = client.post("/boards").json()
@@ -117,6 +120,7 @@ def test_update_and_reset_board() -> None:
         }
 
 
+@pytest.mark.contract("resetBoard")
 def test_reset_waiting_board_and_missing_board_errors() -> None:
     with TestClient(app) as client:
         white = client.post("/boards", json={"ruleSet": "custom"}).json()
@@ -131,6 +135,7 @@ def test_reset_waiting_board_and_missing_board_errors() -> None:
         assert set(missing.json()) == {"code", "message"}
 
 
+@pytest.mark.contract("getBoardState", "updateBoardState", "joinBoard", "resetBoard")
 def test_generated_openapi_describes_board_matrix() -> None:
     with TestClient(app) as client:
         schema = client.get("/openapi.json").json()

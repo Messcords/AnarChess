@@ -29,4 +29,8 @@ dev = [
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+addopts = "-v"
 python_files = ["test-*.py", "test_*.py", "*_test.py"]
+markers = [
+    "contract(*operation_ids): operationId(s) from docs/openapi.yaml covered by the test",
+]
