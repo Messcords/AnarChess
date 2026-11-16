@@ -26,4 +26,15 @@ describe('home page', () => {
     expect(page.get('[data-square="d8"]').text()).toContain('♛')
     expect(page.get('[data-square="d1"]').text()).toContain('♕')
   })
+
+  it('clears a pending selection on reset', async () => {
+    const page = await mountSuspended(IndexPage)
+    await page.get('[data-square="e2"]').trigger('click')
+    await page.get('[data-square="e4"]').trigger('click')
+    await page.get('[data-square="e4"]').trigger('click')
+    await page.get('[data-testid="reset"]').trigger('click')
+    expect(page.findAll('.selected')).toHaveLength(0)
+    await page.get('[data-square="d2"]').trigger('click')
+    expect(page.get('[data-square="d2"]').classes()).toContain('selected')
+  })
 })

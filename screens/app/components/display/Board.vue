@@ -7,6 +7,14 @@ const emit = defineEmits<{ move: [from: Square, to: Square] }>()
 
 const selected = ref<Square | null>(null)
 const pieceBySquare = computed(() => new Map(props.pieces.map((piece) => [piece.square, piece])))
+
+// A new position (move applied, reset…) invalidates any pending selection.
+watch(
+  () => props.pieces,
+  () => {
+    selected.value = null
+  },
+)
 const cells = computed(() =>
   boardSquares().map((square) => ({
     square,
