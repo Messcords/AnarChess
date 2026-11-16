@@ -25,7 +25,7 @@
 openapi: 3.1.0
 info:
   title: AnarChess API
-  version: 0.3.0
+  version: 0.4.0
   description: |
     Contrat entre le frontend et le backend d'AnarChess, un jeu d'échecs où
     l'anarchie règne. Dans le modèle du jeu, le troisième joueur est nommé
@@ -65,9 +65,14 @@ paths:
         c'est le tour, statut de la partie). Utilisé par l'écran Plateau.
         Accessible sans jeton : un spectateur peut voir le plateau.
       operationId: getBoardStatus
+      parameters:
+        - $ref: '#/components/parameters/IfNoneMatch'
       responses:
         '200':
           description: État courant du plateau
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -81,6 +86,8 @@ paths:
                   - { id: w-king, type: king, owner: white, square: e1 }
                   - { id: b-king, type: king, owner: black, square: e8 }
                   - { id: w-pawn-e, type: pawn, owner: white, square: e4 }
+        '304':
+          $ref: '#/components/responses/NotModified'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -117,6 +124,7 @@ paths:
                 boardId: b1c2d3
                 playerToken: 6f1e2a9c-3b4d-4e5f-8a7b-1c2d3e4f5a6b
                 color: white
+                lobby: { id: b1c2d3, status: waiting, players: [white] }
         '400':
           $ref: '#/components/responses/BadRequest'
 
@@ -143,7 +151,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MoveRequest'
+              $ref: '#/components/schemas/Move'
             examples:
               simple:
                 summary: Coup simple
@@ -165,17 +173,11 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
+          $ref: '#/components/responses/Conflict'
           description: |
             Coup impossible dans l'état actuel de la partie : ce n'est pas le
             tour du joueur (NOT_YOUR_TURN), la partie n'a pas commencé
             (BOARD_NOT_STARTED) ou est terminée (BOARD_FINISHED).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                code: NOT_YOUR_TURN
-                message: Ce n'est pas votre tour.
         '422':
           description: |
             Coup illégal (ILLEGAL_MOVE) : la requête est bien formée mais ne
@@ -216,19 +218,14 @@ paths:
                 boardId: b1c2d3
                 playerToken: 0a9b8c7d-6e5f-4a3b-2c1d-0e9f8a7b6c5d
                 color: black
+                lobby: { id: b1c2d3, status: playing, players: [white, black] }
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
+          $ref: '#/components/responses/Conflict'
           description: |
             La partie est déjà complète (BOARD_FULL) ou terminée
             (BOARD_FINISHED).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                code: BOARD_FULL
-                message: Cette partie est déjà complète.
 
   # ---------------------------------------------------------------------------
   # 5 — GET /boards/{id}/events  (US5)
@@ -255,26 +252,35 @@ paths:
           required: false
           description: Nombre maximum d'événements renvoyés (les plus anciens d'abord)
           schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+        - $ref: '#/components/parameters/IfNoneMatch'
       responses:
         '200':
-          description: Liste des événements, éventuellement vide
+          description: |
+            Page d'événements, éventuellement vide. Si `hasMore` vaut true,
+            rappeler avec `since = lastSeq` pour obtenir la suite.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Event'
+                $ref: '#/components/schemas/EventPage'
               example:
-                - seq: 3
-                  type: jester_action
-                  at: '2026-11-16T14:02:11Z'
-                  actor: jester
-                  description: Le Bouffon déplace la tour noire de a8 à a5.
-                  effects:
-                    - square: a8
-                      before: { id: b-rook-a, type: rook, owner: black, square: a8 }
-                    - square: a5
-                      after: { id: b-rook-a, type: rook, owner: black, square: a5 }
+                events:
+                  - seq: 3
+                    type: jester_action
+                    at: '2026-11-16T14:02:11Z'
+                    actor: jester
+                    description: Le Bouffon déplace la tour noire de a8 à a5.
+                    effects:
+                      - square: a8
+                        before: { id: b-rook-a, type: rook, owner: black, square: a8 }
+                      - square: a5
+                        after: { id: b-rook-a, type: rook, owner: black, square: a5 }
+                lastSeq: 3
+                hasMore: false
+        '304':
+          $ref: '#/components/responses/NotModified'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -294,9 +300,14 @@ paths:
         fois la partie terminée, le résultat (gagnant et raison). La partie se
         termine lorsqu'un joueur n'a plus de pièce sur le plateau.
       operationId: getBoard
+      parameters:
+        - $ref: '#/components/parameters/IfNoneMatch'
       responses:
         '200':
           description: Partie trouvée
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -310,6 +321,8 @@ paths:
                 players: [white, black]
                 ruleset: standard
                 result: { winner: white, reason: no_pieces_left }
+        '304':
+          $ref: '#/components/responses/NotModified'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -334,7 +347,40 @@ components:
       schema:
         $ref: '#/components/schemas/BoardId'
 
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      required: false
+      description: |
+        ETag reçu lors de l'appel précédent. Si rien n'a changé depuis, le
+        serveur répond 304 sans corps : le polling ne recharge que ce qui
+        a bougé.
+      schema: { type: string, example: '"7"' }
+
+  headers:
+    ETag:
+      description: Version de la ressource, à renvoyer dans If-None-Match
+      schema: { type: string, example: '"7"' }
+
   responses:
+    NotModified:
+      description: Rien n'a changé depuis l'ETag fourni (pas de corps)
+      headers:
+        ETag:
+          $ref: '#/components/headers/ETag'
+    Conflict:
+      description: Action impossible dans l'état actuel de la partie
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            notYourTurn:
+              value: { code: NOT_YOUR_TURN, message: Ce n'est pas votre tour. }
+            boardFull:
+              value: { code: BOARD_FULL, message: Cette partie est déjà complète. }
+            boardFinished:
+              value: { code: BOARD_FINISHED, message: Cette partie est terminée. }
     BadRequest:
       description: Requête mal formée (INVALID_REQUEST) — champ manquant, case invalide…
       content:
@@ -467,23 +513,15 @@ components:
 
     Board:
       description: |
-        Partie complète : l'état du plateau (BoardState) enrichi des joueurs,
-        des règles et du résultat. `result` est présent si et seulement si
-        status = finished.
+        Partie complète : l'état du plateau (BoardState) et le salon (Lobby),
+        enrichis des règles et du résultat. `result` est présent si et
+        seulement si status = finished.
       allOf:
         - $ref: '#/components/schemas/BoardState'
+        - $ref: '#/components/schemas/Lobby'
         - type: object
-          required: [id, players, ruleset]
+          required: [ruleset]
           properties:
-            id:
-              $ref: '#/components/schemas/BoardId'
-            players:
-              type: array
-              description: Couleurs déjà occupées par un joueur humain
-              items:
-                $ref: '#/components/schemas/Color'
-              uniqueItems: true
-              maxItems: 2
             ruleset:
               $ref: '#/components/schemas/Ruleset'
             result:
@@ -503,10 +541,29 @@ components:
         ruleset:
           $ref: '#/components/schemas/Ruleset'
 
+    Lobby:
+      type: object
+      description: |
+        Salon d'attente affiché sur l'écran Lobby (US4) : qui est déjà là et
+        si la partie peut commencer.
+      required: [id, status, players]
+      properties:
+        id:
+          $ref: '#/components/schemas/BoardId'
+        status:
+          $ref: '#/components/schemas/BoardStatus'
+        players:
+          type: array
+          description: Couleurs déjà occupées par un joueur humain
+          items:
+            $ref: '#/components/schemas/Color'
+          uniqueItems: true
+          maxItems: 2
+
     PlayerAccess:
       type: object
       description: Ce que reçoit un joueur pour pouvoir jouer ensuite
-      required: [boardId, playerToken, color]
+      required: [boardId, playerToken, color, lobby]
       properties:
         boardId:
           $ref: '#/components/schemas/BoardId'
@@ -515,12 +572,12 @@ components:
           description: À conserver côté client et à renvoyer dans le header X-Player-Token
         color:
           $ref: '#/components/schemas/Color'
-
-    MoveRequest:
-      description: Coup envoyé par le joueur
-      $ref: '#/components/schemas/Move'
+        lobby:
+          description: État du salon juste après l'arrivée du joueur, pour afficher l'écran Lobby sans autre appel
+          $ref: '#/components/schemas/Lobby'
 
     Move:
+      description: Coup envoyé par le joueur, ou rappelé dans un plateau ou un événement
       type: object
       additionalProperties: false
       required: [from, to]
@@ -610,6 +667,22 @@ components:
             required: [result]
           else:
             not: { required: [result] }
+
+    EventPage:
+      type: object
+      required: [events, lastSeq, hasMore]
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+        lastSeq:
+          type: integer
+          minimum: 0
+          description: seq du dernier événement renvoyé (ou `since` si la page est vide), à passer en `since` au prochain appel
+        hasMore:
+          type: boolean
+          description: true s'il reste des événements au-delà de `limit`
 
     ErrorCode:
       type: string
