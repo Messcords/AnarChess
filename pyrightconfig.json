@@ -1,0 +1,4 @@
+{
+  "include": ["endpoints/src", "endpoints/test"],
+  "extraPaths": ["endpoints/src"]
+}
