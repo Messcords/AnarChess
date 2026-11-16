@@ -1,75 +1,48 @@
-# Nuxt Minimal Starter
+# Frontend
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Application Nuxt d'AnarChess.
 
-## Setup
+## Prérequis
 
-Make sure to install dependencies:
+- Node.js
+- [pnpm](https://pnpm.io/)
+- GNU Make
+
+## Installation
+
+Depuis le dossier `screens` :
 
 ```bash
-# npm
-npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+make install
 ```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+## Lancement
 
 ```bash
-# npm
-npm run dev
+make serve
+```
 
-# pnpm
-pnpm dev
+Le serveur de développement est disponible sur <http://localhost:3000>.
 
-# yarn
-yarn dev
+## Qualité
 
-# bun
-bun run dev
+```bash
+make check   # lint + tests
+make lint    # ESLint
+make fix     # corrections automatiques ESLint
 ```
 
 ## Production
 
-Build the application for production:
-
 ```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+make build     # build de production
+make preview   # prévisualisation du build
 ```
 
-Locally preview production build:
+Pour afficher les autres commandes disponibles :
 
 ```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
+make help
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Voir la [documentation Nuxt](https://nuxt.com/docs/getting-started/introduction) pour plus d'informations.
