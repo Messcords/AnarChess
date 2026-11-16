@@ -53,10 +53,11 @@ version finale.
 
 ## Design
 
-- **Modèle de données** : l'état local est une liste de pièces au format du
-  contrat `docs/openapi.yaml` (`Piece`) : `{ id, type, owner, square }`,
-  avec `owner` ∈ `white | black` et `square` ∈ `a1..h8`. Le branchement au
-  back plus tard n'aura pas à convertir de format.
+- **Modèle de données** : l'état local est le `Board` du contrat
+  `docs/openapi.yaml` : une matrice 8×8 de codes de pièces (`"wK"`, `"bP"`…,
+  couleur `w|b` + `K Q R B N P`) ou `""` pour une case vide. Ligne 0 = rangée
+  8, colonne 0 = colonne a. Le branchement au back plus tard n'aura pas à
+  convertir de format.
 - **Logique pure** (fichier TypeScript sans Vue) : position de départ,
   conversion case ↔ ligne/colonne, déplacement d'une pièce avec capture.
   Testée unitairement.

@@ -1,61 +1,59 @@
-import { FILES, type Square } from '~/utils/chess'
+import { FILES, RANKS, type BoardFile, type BoardRank, type Square } from '~/utils/chess'
 
-/** Same shape as the `Piece` schema of docs/openapi.yaml (no jester in this POC). */
-export type Owner = 'white' | 'black'
-export type PieceType = 'king' | 'queen' | 'rook' | 'bishop' | 'knight' | 'pawn'
+/** Contract piece code: color (w|b) + piece letter (King Queen Rook Bishop kNight Pawn). */
+export type PieceCode = `${'w' | 'b'}${'K' | 'Q' | 'R' | 'B' | 'N' | 'P'}`
 
-export interface Piece {
-  id: string
-  type: PieceType
-  owner: Owner
-  square: Square
-}
+/** A board cell: a piece code, or '' for an empty square. */
+export type Cell = PieceCode | ''
 
-/** Back rank from a to h, with the id suffix of each piece. */
-const BACK_RANK: ReadonlyArray<{ type: PieceType; key: string }> = [
-  { type: 'rook', key: 'r1' },
-  { type: 'knight', key: 'n1' },
-  { type: 'bishop', key: 'b1' },
-  { type: 'queen', key: 'q' },
-  { type: 'king', key: 'k' },
-  { type: 'bishop', key: 'b2' },
-  { type: 'knight', key: 'n2' },
-  { type: 'rook', key: 'r2' },
-]
+/** Contract `Board` (docs/openapi.yaml): 8×8 matrix, row 0 = rank 8, column 0 = file a. */
+export type BoardMatrix = Cell[][]
 
-const GLYPHS: Record<Owner, Record<PieceType, string>> = {
-  white: { king: '♔', queen: '♕', rook: '♖', bishop: '♗', knight: '♘', pawn: '♙' },
-  black: { king: '♚', queen: '♛', rook: '♜', bishop: '♝', knight: '♞', pawn: '♟' },
+const BACK_RANK = ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'] as const
+
+const GLYPHS: Record<PieceCode, string> = {
+  wK: '♔', wQ: '♕', wR: '♖', wB: '♗', wN: '♘', wP: '♙',
+  bK: '♚', bQ: '♛', bR: '♜', bB: '♝', bN: '♞', bP: '♟',
 }
 
 /** U+FE0E forces text presentation, so ♟ never renders as a colored emoji. */
 const TEXT_PRESENTATION = '︎'
 
-function sideSetup(owner: Owner, backRank: '1' | '8', pawnRank: '2' | '7'): Piece[] {
-  const prefix = `p_${owner[0]}_`
-  return FILES.flatMap((file, i): Piece[] => [
-    { id: prefix + BACK_RANK[i]!.key, type: BACK_RANK[i]!.type, owner, square: `${file}${backRank}` },
-    { id: `${prefix}p${i + 1}`, type: 'pawn', owner, square: `${file}${pawnRank}` },
-  ])
+function toIndex(square: Square): [row: number, col: number] {
+  return [RANKS.indexOf(square[1] as BoardRank), FILES.indexOf(square[0] as BoardFile)]
 }
 
-export function initialPieces(): Piece[] {
-  return [...sideSetup('white', '1', '2'), ...sideSetup('black', '8', '7')]
+export function initialBoard(): BoardMatrix {
+  const empty = (): Cell[] => Array<Cell>(8).fill('')
+  return [
+    BACK_RANK.map((p): Cell => `b${p}`),
+    Array<Cell>(8).fill('bP'),
+    empty(),
+    empty(),
+    empty(),
+    empty(),
+    Array<Cell>(8).fill('wP'),
+    BACK_RANK.map((p): Cell => `w${p}`),
+  ]
 }
 
-export function pieceAt(pieces: readonly Piece[], square: Square): Piece | undefined {
-  return pieces.find((piece) => piece.square === square)
+export function cellAt(board: readonly (readonly Cell[])[], square: Square): Cell {
+  const [row, col] = toIndex(square)
+  return board[row]?.[col] ?? ''
 }
 
-/** Free move (no chess rules): whatever stands on `to` is captured. */
-export function movePiece(pieces: readonly Piece[], from: Square, to: Square): Piece[] {
-  const moving = pieceAt(pieces, from)
-  if (!moving || from === to) return pieces.map((piece) => ({ ...piece }))
-  return pieces
-    .filter((piece) => piece.square !== to)
-    .map((piece) => (piece === moving ? { ...piece, square: to } : { ...piece }))
+/** Free move (no chess rules): whatever stands on `to` is captured. Never mutates `board`. */
+export function movePiece(board: readonly (readonly Cell[])[], from: Square, to: Square): BoardMatrix {
+  const next = board.map((row) => [...row])
+  const moving = cellAt(board, from)
+  if (moving === '' || from === to) return next
+  const [fromRow, fromCol] = toIndex(from)
+  const [toRow, toCol] = toIndex(to)
+  next[toRow]![toCol] = moving
+  next[fromRow]![fromCol] = ''
+  return next
 }
 
-export function pieceGlyph(piece: Pick<Piece, 'type' | 'owner'>): string {
-  return GLYPHS[piece.owner][piece.type] + TEXT_PRESENTATION
+export function pieceGlyph(code: PieceCode): string {
+  return GLYPHS[code] + TEXT_PRESENTATION
 }

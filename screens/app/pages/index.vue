@@ -1,22 +1,22 @@
 <script setup lang="ts">
 import type { Square } from '~/utils/chess'
-import { initialPieces, movePiece, type Piece } from '~/utils/pieces'
+import { initialBoard, movePiece, type BoardMatrix } from '~/utils/pieces'
 
-const pieces = ref<Piece[]>(initialPieces())
+const board = ref<BoardMatrix>(initialBoard())
 
 function onMove(from: Square, to: Square) {
-  pieces.value = movePiece(pieces.value, from, to)
+  board.value = movePiece(board.value, from, to)
 }
 
 function reset() {
-  pieces.value = initialPieces()
+  board.value = initialBoard()
 }
 </script>
 
 <template>
   <main class="home">
     <h1>AnarChess</h1>
-    <DisplayBoard :pieces="pieces" @move="onMove" />
+    <DisplayBoard :board="board" @move="onMove" />
     <button type="button" class="reset" data-testid="reset" @click="reset">Réinitialiser</button>
   </main>
 </template>

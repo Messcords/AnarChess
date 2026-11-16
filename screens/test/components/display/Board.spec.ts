@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Board from '@/components/display/Board.vue'
-import { initialPieces } from '~/utils/pieces'
+import { initialBoard } from '~/utils/pieces'
 
 describe('Board', () => {
   it('Display of the board', () => {
@@ -30,7 +30,7 @@ describe('Board', () => {
 })
 
 describe('Board with pieces', () => {
-  const mountWithPieces = () => mount(Board, { props: { pieces: initialPieces() } })
+  const mountWithPieces = () => mount(Board, { props: { board: initialBoard() } })
 
   it('shows each piece on its square', () => {
     const wrapper = mountWithPieces()

@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { FILES, RANKS, boardSquares, isLightSquare, type Square } from '~/utils/chess'
-import { pieceGlyph, type Piece } from '~/utils/pieces'
+import { cellAt, pieceGlyph, type BoardMatrix } from '~/utils/pieces'
 
-const props = withDefaults(defineProps<{ pieces?: Piece[] }>(), { pieces: () => [] })
+/** `board` follows the API contract: 8×8 matrix of piece codes ('' = empty). */
+const props = withDefaults(defineProps<{ board?: BoardMatrix }>(), { board: () => [] })
 const emit = defineEmits<{ move: [from: Square, to: Square] }>()
 
 const selected = ref<Square | null>(null)
-const pieceBySquare = computed(() => new Map(props.pieces.map((piece) => [piece.square, piece])))
 
 // A new position (move applied, reset…) invalidates any pending selection.
 watch(
-  () => props.pieces,
+  () => props.board,
   () => {
     selected.value = null
   },
@@ -19,14 +19,14 @@ const cells = computed(() =>
   boardSquares().map((square) => ({
     square,
     light: isLightSquare(square),
-    piece: pieceBySquare.value.get(square),
+    code: cellAt(props.board, square),
   })),
 )
 
 /** Two-click move: pick a piece, then its destination. The parent applies the move. */
 function onSquareClick(square: Square) {
   if (selected.value === null) {
-    if (pieceBySquare.value.has(square)) selected.value = square
+    if (cellAt(props.board, square) !== '') selected.value = square
     return
   }
   if (selected.value !== square) emit('move', selected.value, square)
@@ -42,7 +42,7 @@ function onSquareClick(square: Square) {
 
     <div class="grid">
       <button
-        v-for="{ square, light, piece } in cells"
+        v-for="{ square, light, code } in cells"
         :key="square"
         type="button"
         class="square"
@@ -52,7 +52,7 @@ function onSquareClick(square: Square) {
         :aria-pressed="selected === square"
         @click="onSquareClick(square)"
       >
-        <span v-if="piece" class="piece" :data-piece-id="piece.id">{{ pieceGlyph(piece) }}</span>
+        <span v-if="code" class="piece" :data-piece="code">{{ pieceGlyph(code) }}</span>
       </button>
     </div>
 
