@@ -128,19 +128,18 @@ paths:
                       role: white
                     - playerId: plr_02
                       role: black
-                    - playerId: plr_03
-                      role: jester
                   outcome: null
                 board:
-                  pieces:
-                    - id: p_w_p1
-                      type: pawn
-                      owner: white
-                      square: e4
-                    - id: p_j_1
-                      type: jester_piece
-                      owner: jester
-                      square: d5
+                  [
+                    ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+                    ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
+                    ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
+                  ]
         '400':
           description: Identifiant invalide
           content:
@@ -173,15 +172,16 @@ paths:
                 ruleSet: standard
                 outcome: null
               board:
-                pieces:
-                  - id: p_w_p1
-                    type: pawn
-                    owner: white
-                    square: e4
-                  - id: p_j_1
-                    type: jester_piece
-                    owner: jester
-                    square: d5
+                [
+                  ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+                  ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
+                  [null, null, null, null, null, null, null, null],
+                  [null, null, null, null, null, null, null, null],
+                  [null, null, null, null, null, null, null, null],
+                  [null, null, null, null, null, null, null, null],
+                  ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
+                  ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
+                ]
       responses:
         '200':
           description: État mis à jour
