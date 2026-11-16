@@ -41,10 +41,10 @@ paths:
                   [
                     ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
                     ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
-                    [null, null, null, null, null, null, null, null],
-                    [null, null, null, null, null, null, null, null],
-                    [null, null, null, null, null, null, null, null],
-                    [null, null, null, null, null, null, null, null],
+                    ["", "", "", "", "", "", "", ""],
+                    ["", "", "", "", "", "", "", ""],
+                    ["", "", "", "", "", "", "", ""],
+                    ["", "", "", "", "", "", "", ""],
                     ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
                     ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
                   ]
@@ -133,10 +133,10 @@ paths:
                   [
                     ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
                     ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
-                    [null, null, null, null, null, null, null, null],
-                    [null, null, null, null, null, null, null, null],
-                    [null, null, null, null, null, null, null, null],
-                    [null, null, null, null, null, null, null, null],
+                    ["", "", "", "", "", "", "", ""],
+                    ["", "", "", "", "", "", "", ""],
+                    ["", "", "", "", "", "", "", ""],
+                    ["", "", "", "", "", "", "", ""],
                     ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
                     ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
                   ]
@@ -175,10 +175,10 @@ paths:
                 [
                   ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
                   ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
-                  [null, null, null, null, null, null, null, null],
-                  [null, null, null, null, null, null, null, null],
-                  [null, null, null, null, null, null, null, null],
-                  [null, null, null, null, null, null, null, null],
+                  ["", "", "", "", "", "", "", ""],
+                  ["", "", "", "", "", "", "", ""],
+                  ["", "", "", "", "", "", "", ""],
+                  ["", "", "", "", "", "", "", ""],
                   ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
                   ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
                 ]
@@ -357,14 +357,16 @@ components:
             - type: 'null'
 
     Board:
-      type: object
-      required:
-        - pieces
-      properties:
-        pieces:
-          type: array
-          items:
-            $ref: '#/components/schemas/Piece'
+      type: array
+      description: Matrice 8×8 de codes de pièces ou de cases vides.
+      minItems: 8
+      maxItems: 8
+      items:
+        type: array
+        minItems: 8
+        maxItems: 8
+        items:
+          type: [string]
 
     BoardState:
       type: object
@@ -415,6 +417,9 @@ components:
       properties:
         boardId:
           type: string
+        board:
+          $ref: '#/components/schemas/Board'
+          description: Plateau initial, présent dans la réponse de création.
         playerId:
           type: string
         role:
