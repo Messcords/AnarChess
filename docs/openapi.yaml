@@ -22,9 +22,6 @@ paths:
             schema:
               type: object
               properties:
-                includeJester:
-                  type: boolean
-                  default: true
                 ruleSet:
                   type: string
                   default: standard
@@ -283,7 +280,6 @@ components:
       enum:
         - white
         - black
-        - jester
 
     Piece:
       type: object
