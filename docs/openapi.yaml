@@ -171,6 +171,16 @@ components:
       required: []          # TODO
       properties: {}        # TODO : état ? tour ? pièces ? résultat ?
 
+    Lobby:
+      type: object
+      properties:
+        id:
+          type: string
+        players:
+          type: array
+          items:
+            type: string
+
     PlayerAccess:
       type: object
       properties: {}        # TODO : ce que reçoit un joueur pour jouer
