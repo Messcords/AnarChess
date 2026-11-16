@@ -40,7 +40,6 @@ class BoardError(Exception):
 @dataclass
 class StoredBoard:
     state: BoardState
-    include_jester: bool
     tokens: list[str]
 
 
@@ -65,7 +64,7 @@ class BoardService:
                 ),
                 board=board,
             )
-            self._boards[board_id] = StoredBoard(state, request.includeJester, [token])
+            self._boards[board_id] = StoredBoard(state, [token])
             return CreatedPlayerAccess(
                 boardId=board_id,
                 playerId=player_id,
@@ -96,8 +95,6 @@ class BoardService:
             if board.state.gameState.status == "finished":
                 raise BoardError(409, "board_finished", "Board is finished")
             roles: list[PlayerRole] = ["black"]
-            if board.include_jester:
-                roles.append("jester")
             occupied = {player.role for player in board.state.gameState.players}
             available: list[PlayerRole] = [
                 role for role in roles if role not in occupied

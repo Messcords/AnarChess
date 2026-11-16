@@ -9,41 +9,35 @@ def test_join_roles_and_capacity() -> None:
     with TestClient(app) as client:
         white = client.post("/boards").json()
         board_id = white["boardId"]
-        jester = client.post(
-            f"/boards/{board_id}/join", json={"preferredRole": "jester"}
-        )
-        assert jester.status_code == 200
-        assert jester.json()["role"] == "jester"
-        assert (
-            client.get(f"/boards/{board_id}").json()["gameState"]["status"] == "waiting"
-        )
         black = client.post(f"/boards/{board_id}/join")
         assert black.status_code == 200
         assert black.json()["role"] == "black"
+        assert (
+            client.get(f"/boards/{board_id}").json()["gameState"]["status"]
+            == "in_progress"
+        )
         assert client.post(f"/boards/{board_id}/join").status_code == 409
         assert client.post("/boards/brd_missing/join").status_code == 404
 
-        no_jester = client.post("/boards", json={"includeJester": False}).json()
-        no_jester_id = no_jester["boardId"]
         assert (
             client.post(
-                f"/boards/{no_jester_id}/join", json={"preferredRole": "jester"}
-            ).status_code
-            == 409
-        )
-        assert (
-            client.post(
-                f"/boards/{no_jester_id}/join", json={"preferredRole": "invalid"}
+                f"/boards/{board_id}/join", json={"preferredRole": "jester"}
             ).status_code
             == 400
         )
-        assert client.post("/boards", json={"includeJester": 1}).status_code == 400
+        assert (
+            client.post(
+                f"/boards/{board_id}/join", json={"preferredRole": "invalid"}
+            ).status_code
+            == 400
+        )
+        assert client.post("/boards", json={"includeJester": False}).status_code == 400
         assert client.post("/boards", content="{").status_code == 400
 
 
 def test_update_and_reset_board() -> None:
     with TestClient(app) as client:
-        white = client.post("/boards", json={"includeJester": False}).json()
+        white = client.post("/boards").json()
         board_id = white["boardId"]
         black = client.post(f"/boards/{board_id}/join").json()
         headers = {"X-Player-Token": black["token"]}
@@ -151,3 +145,9 @@ def test_generated_openapi_describes_board_matrix() -> None:
     assert board["items"]["items"]["type"] == "string"
     access = schema["components"]["schemas"]["CreatedPlayerAccess"]
     assert "board" in access["required"]
+    create_request = schema["components"]["schemas"]["CreateBoardRequest"]
+    assert set(create_request["properties"]) == {"ruleSet"}
+    preferred_role = schema["components"]["schemas"]["JoinBoardRequest"]["properties"][
+        "preferredRole"
+    ]
+    assert preferred_role["anyOf"][0]["enum"] == ["white", "black"]

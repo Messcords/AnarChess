@@ -1,8 +1,8 @@
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 
-PlayerRole = Literal["white", "black", "jester"]
+PlayerRole = Literal["white", "black"]
 BoardStatus = Literal["waiting", "in_progress", "finished"]
 BoardRow = Annotated[list[StrictStr], Field(min_length=8, max_length=8)]
 Board = Annotated[list[BoardRow], Field(min_length=8, max_length=8)]
@@ -13,7 +13,6 @@ class RequestModel(BaseModel):
 
 
 class CreateBoardRequest(RequestModel):
-    includeJester: StrictBool = True
     ruleSet: StrictStr = "standard"
 
 

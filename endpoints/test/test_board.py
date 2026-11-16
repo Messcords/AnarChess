@@ -29,7 +29,7 @@ def test_create_board_returns_player_access() -> None:
 
 def test_create_board_rejects_invalid_parameters() -> None:
     with TestClient(app) as client:
-        response = client.post("/boards", json={"includeJester": "not-a-boolean"})
+        response = client.post("/boards", json={"includeJester": False})
 
     assert response.status_code == 400
     assert response.json() == {"detail": "Invalid request parameters"}
@@ -47,7 +47,7 @@ def test_get_board_state() -> None:
         assert isinstance(missing_response.json()["code"], str)
         assert isinstance(missing_response.json()["message"], str)
 
-        created_response = client.post("/boards", json={"includeJester": False})
+        created_response = client.post("/boards")
         assert created_response.status_code == 201
         white_player = created_response.json()
         board_id = white_player["boardId"]
