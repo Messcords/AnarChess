@@ -37,8 +37,19 @@ paths:
                 $ref: '#/components/schemas/PlayerAccess'
               example:
                 boardId: brd_01
-                playerId: plr_01
+                board:
+                  [
+                    ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+                    ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
+                    ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
+                  ]
                 role: white
+                playerId: plr_01
                 token: tok_white_01
         '400':
           description: Paramètres invalides
