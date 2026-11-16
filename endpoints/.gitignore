@@ -3,4 +3,8 @@
 .ruff_cache
 
 src/__pycache__
+src/api/__pycache__
+src/models/__pycache__
+src/services/__pycache__
+
 test/__pycache__
