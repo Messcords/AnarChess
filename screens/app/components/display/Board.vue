@@ -1,7 +1,29 @@
 <script setup lang="ts">
-import { FILES, RANKS, boardSquares, isLightSquare } from '~/utils/chess'
+import { FILES, RANKS, boardSquares, isLightSquare, type Square } from '~/utils/chess'
+import { pieceGlyph, type Piece } from '~/utils/pieces'
 
-const squares = boardSquares()
+const props = withDefaults(defineProps<{ pieces?: Piece[] }>(), { pieces: () => [] })
+const emit = defineEmits<{ move: [from: Square, to: Square] }>()
+
+const selected = ref<Square | null>(null)
+const pieceBySquare = computed(() => new Map(props.pieces.map((piece) => [piece.square, piece])))
+const cells = computed(() =>
+  boardSquares().map((square) => ({
+    square,
+    light: isLightSquare(square),
+    piece: pieceBySquare.value.get(square),
+  })),
+)
+
+/** Two-click move: pick a piece, then its destination. The parent applies the move. */
+function onSquareClick(square: Square) {
+  if (selected.value === null) {
+    if (pieceBySquare.value.has(square)) selected.value = square
+    return
+  }
+  if (selected.value !== square) emit('move', selected.value, square)
+  selected.value = null
+}
 </script>
 
 <template>
@@ -12,14 +34,18 @@ const squares = boardSquares()
 
     <div class="grid">
       <button
-        v-for="square in squares"
+        v-for="{ square, light, piece } in cells"
         :key="square"
         type="button"
         class="square"
-        :class="isLightSquare(square) ? 'light' : 'dark'"
+        :class="[light ? 'light' : 'dark', { selected: selected === square }]"
         :data-square="square"
         :aria-label="square"
-      />
+        :aria-pressed="selected === square"
+        @click="onSquareClick(square)"
+      >
+        <span v-if="piece" class="piece" :data-piece-id="piece.id">{{ pieceGlyph(piece) }}</span>
+      </button>
     </div>
 
     <div class="files">
@@ -70,6 +96,22 @@ const squares = boardSquares()
   aspect-ratio: 1;
   border: 0;
   padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.piece {
+  font-size: calc(var(--size) / 8 * 0.7);
+  line-height: 1;
+  color: #111;
+  font-variant-emoji: text;
+  user-select: none;
+}
+
+.selected {
+  box-shadow: inset 0 0 0 4px #f6c90e;
 }
 
 .light {

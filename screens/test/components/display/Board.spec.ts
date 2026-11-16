@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import Board from '@/components/display/Board.vue'
+import { initialPieces } from '~/utils/pieces'
 
 describe('Board', () => {
   it('Display of the board', () => {
@@ -25,5 +26,48 @@ describe('Board', () => {
     const wrapper = mount(Board)
     expect(wrapper.findAll('.coord-file').map((e) => e.text())).toEqual(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
     expect(wrapper.findAll('.coord-rank').map((e) => e.text())).toEqual(['8', '7', '6', '5', '4', '3', '2', '1'])
+  })
+})
+
+describe('Board with pieces', () => {
+  const mountWithPieces = () => mount(Board, { props: { pieces: initialPieces() } })
+
+  it('shows each piece on its square', () => {
+    const wrapper = mountWithPieces()
+    expect(wrapper.findAll('.piece')).toHaveLength(32)
+    expect(wrapper.get('[data-square="e1"]').text()).toContain('♔')
+    expect(wrapper.get('[data-square="e8"]').text()).toContain('♚')
+    expect(wrapper.find('[data-square="e4"] .piece').exists()).toBe(false)
+  })
+
+  it('selects a piece on first click', async () => {
+    const wrapper = mountWithPieces()
+    await wrapper.get('[data-square="e2"]').trigger('click')
+    expect(wrapper.get('[data-square="e2"]').classes()).toContain('selected')
+    expect(wrapper.get('[data-square="e2"]').attributes('aria-pressed')).toBe('true')
+    expect(wrapper.emitted('move')).toBeUndefined()
+  })
+
+  it('emits move on second click and clears selection', async () => {
+    const wrapper = mountWithPieces()
+    await wrapper.get('[data-square="e2"]').trigger('click')
+    await wrapper.get('[data-square="e4"]').trigger('click')
+    expect(wrapper.emitted('move')).toEqual([['e2', 'e4']])
+    expect(wrapper.findAll('.selected')).toHaveLength(0)
+  })
+
+  it('ignores a click on an empty square when nothing is selected', async () => {
+    const wrapper = mountWithPieces()
+    await wrapper.get('[data-square="e4"]').trigger('click')
+    expect(wrapper.findAll('.selected')).toHaveLength(0)
+    expect(wrapper.emitted('move')).toBeUndefined()
+  })
+
+  it('deselects when the selected piece is clicked again', async () => {
+    const wrapper = mountWithPieces()
+    await wrapper.get('[data-square="e2"]').trigger('click')
+    await wrapper.get('[data-square="e2"]').trigger('click')
+    expect(wrapper.findAll('.selected')).toHaveLength(0)
+    expect(wrapper.emitted('move')).toBeUndefined()
   })
 })
