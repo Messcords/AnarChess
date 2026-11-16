@@ -1,209 +1,426 @@
-# =============================================================================
-#  CADRE D'APPRENTISSAGE — Contrat OpenAPI (endpoints indispensables uniquement)
-# =============================================================================
-#  Périmètre : stories Must seulement (US1, US2a, US2b, US3, US4, US5).
-#  5 endpoints, pas un de plus :
-#
-#    POST /boards                 créer une partie          (US2a)
-#    POST /boards/{id}/join       rejoindre une partie      (US3)
-#    GET  /boards/{id}            voir le plateau + issue   (US1, US5)
-#    POST /boards/{id}/moves      jouer un coup             (US2a, US2b)
-#    GET  /boards/{id}/events     voir les événements       (US4)
-#
-#  Pour chaque endpoint, réponds à 4 questions avant d'écrire :
-#    1. Qui appelle ?
-#    2. Qu'envoie-t-il ?
-#    3. Que reçoit-il si tout va bien ?
-#    4. Qu'est-ce qui peut mal tourner ? (un code d'erreur par cas)
-#
-#  Vérifie le fichier à chaque étape sur https://editor.swagger.io
-# =============================================================================
-
 openapi: 3.1.0
 info:
-  title: TODO
-  version: 0.1.0
+  title: Jeu d'échecs avec Bouffon — API HTTP (5 endpoints)
+  version: 0.4.0
+  description: >
+    Contrat REST (sans WebSocket) : le frontend déplace les pièces,
+    le backend gère l'accès, l'état du plateau et l'état de la partie.
 
 servers:
-  - url: TODO
+  - url: http://localhost:4010
+    description: Serveur local / Prism mock
 
 paths:
-
-
-  # ---------------------------------------------------------------------------
-  # 1 — POST /boards  (US1)
-  # ---------------------------------------------------------------------------
-  /boards/{id}/status:
-    get:
-      summary: Game status 
+  /boards:
+    post:
+      summary: Créer une partie
+      operationId: createBoard
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                includeJester:
+                  type: boolean
+                  default: true
+                ruleSet:
+                  type: string
+                  default: standard
       responses:
-        '200':
-          description: Affiche le plateau de jeu
+        '201':
+          description: Partie créée
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlayerAccess'
+              example:
+                boardId: brd_01
+                playerId: plr_01
+                role: white
+                token: tok_white_01
         '400':
-          description: Erreur récupération de la partie
-        '404':
-          description: Plateau inexistant
-  
-  # ---------------------------------------------------------------------------
-  # 2 — POST /boards  (US2)
-  # ---------------------------------------------------------------------------
-  # QUESTIONS :
-  #  - Pourquoi POST et pas GET ? 200 ou 201 ?
-  #  - Que doit recevoir le créateur pour pouvoir jouer ensuite ?
-  #    (il n'y a pas de compte : comment le reconnaître ?)
-  /boards:
-    post:
-      summary: Création du salon
-      responses:
-        '201':
-          description: Creation réussi
-        '400':
-          description: Création échouée
-          
-  # ---------------------------------------------------------------------------
-  # 2 — POST /boards/{id}/join  (US3)
-  # ---------------------------------------------------------------------------
-  # QUESTIONS :
-  #  - Le joueur qui rejoint reçoit-il la même chose que le créateur ?
-  #  - Que répondre si la partie est déjà complète ? Si elle n'existe pas ?
-  /boards/{id}/join:
-    post:
-      summary: Join a lobby
-      parameters:
-        - $ref: '#/components/parameters/LobbyId'
-      responses:
-        '200':
-          description: Affiche le salon
+          description: Paramètres invalides
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Lobby'
-        '400':
-          description: Impossible de rejoindre le salon
-        '404':
-          description: Salon inexistant
+                $ref: '#/components/schemas/Error'
 
-  # ---------------------------------------------------------------------------
-  # 3 — GET /boards/{id}  (US1 + US5)
-  # ---------------------------------------------------------------------------
-  # QUESTIONS :
-  #  - De quoi l'écran Plateau a-t-il besoin pour s'afficher ?
-  #  - Comment savoir si la partie est en attente, en cours ou terminée ?
-  #  - Où mettre le résultat (gagnant, raison) ? Quand est-il présent ?
-  #  - Pourquoi un seul endpoint suffit pour US1 et US5 ?
+  /boards/{id}/join:
+    post:
+      summary: Rejoindre une partie
+      operationId: joinBoard
+      parameters:
+        - $ref: '#/components/parameters/BoardId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                preferredRole:
+                  $ref: '#/components/schemas/PlayerRole'
+      responses:
+        '200':
+          description: Joueur ajouté
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerAccess'
+              example:
+                boardId: brd_01
+                playerId: plr_02
+                role: black
+                token: tok_black_02
+        '400':
+          description: Requête mal formée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Partie introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Partie complète ou terminée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /boards/{id}:
     get:
-      summary: End game
+      summary: Récupérer l'état du plateau et l'état de la partie
+      operationId: getBoardState
       parameters:
         - $ref: '#/components/parameters/BoardId'
       responses:
         '200':
-          description: Fin de jeu
+          description: État complet du plateau et de la partie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardState'
+              example:
+                id: brd_01
+                gameState:
+                  status: in_progress
+                  turn: white
+                  ruleSet: standard
+                  players:
+                    - playerId: plr_01
+                      role: white
+                    - playerId: plr_02
+                      role: black
+                    - playerId: plr_03
+                      role: jester
+                  outcome: null
+                board:
+                  pieces:
+                    - id: p_w_p1
+                      type: pawn
+                      owner: white
+                      square: e4
+                    - id: p_j_1
+                      type: jester_piece
+                      owner: jester
+                      square: d5
         '400':
-          description: Erreur lors de la fin de jeu
+          description: Identifiant invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Partie introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
-  # ---------------------------------------------------------------------------
-  # 4 — POST /boards/{id}/moves  (US2a + US2b)
-  # ---------------------------------------------------------------------------
-  # QUESTIONS :
-  #  - Un coup, c'est quoi au minimum ?
-  #  - Comment le serveur sait-il QUI joue ? (header ? body ?)
-  #  - Que renvoyer après un coup accepté ? (le nouveau plateau ? les événements ?)
-  #  - Un code par erreur :
-  #      joueur non reconnu ?  pas son tour / partie finie ?  coup illégal ?
-  #    (compare 400 et 422 : lequel pour un coup illégal, et pourquoi ?)
-  /boards/{id}/player/{id}/moves:
-    post:
-      summary: Move a piece across the board
+    patch:
+      summary: Synchroniser le nouvel état du plateau et de la partie (depuis le front)
+      operationId: updateBoardState
       parameters:
         - $ref: '#/components/parameters/BoardId'
-        - $ref: '#/components/parameters/PlayerId'
+        - $ref: '#/components/parameters/PlayerToken'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MoveRequest'
+              $ref: '#/components/schemas/BoardStateUpdate'
+            example:
+              gameState:
+                status: in_progress
+                turn: black
+                ruleSet: standard
+                outcome: null
+              board:
+                pieces:
+                  - id: p_w_p1
+                    type: pawn
+                    owner: white
+                    square: e4
+                  - id: p_j_1
+                    type: jester_piece
+                    owner: jester
+                    square: d5
       responses:
         '200':
-          description: Movement de la pièce réussi
+          description: État mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardState'
         '400':
-          description: Erreur lors du mouvement de la pièce
+          description: Payload invalide (ex. coordonnée hors a1..h8)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Jeton joueur invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Partie introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Partie déjà terminée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /boards/{id}/reset:
+    post:
+      summary: Réinitialiser le plateau et l'état de la partie
+      operationId: resetBoard
+      parameters:
+        - $ref: '#/components/parameters/BoardId'
+        - $ref: '#/components/parameters/PlayerToken'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ruleSet:
+                  type: string
+                  description: Nouvelle règle optionnelle pour la manche suivante
+      responses:
+        '200':
+          description: Partie réinitialisée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardState'
+        '403':
+          description: Jeton joueur invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Partie introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
-
   parameters:
     BoardId:
       name: id
-      in: path              # path, query ou header ?
+      in: path
       required: true
-      schema: { type: string }
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
 
-    LobbyId:
-      name: id
-      in: path              # path, query ou header ?
+    PlayerToken:
+      name: X-Player-Token
+      in: header
       required: true
-      schema: { type: string }
-    PlayerId:
-      name: id
-      in: path              # path, query ou header ?
-      required: true
-      schema: { type: string }
+      schema:
+        type: string
+        minLength: 8
 
   schemas:
-
     Square:
       type: string
-      # TODO : un "pattern" qui n'accepte que a1 à h8
+      pattern: '^[a-h][1-8]$'
+      examples:
+        - e2
+        - e4
+
+    PlayerRole:
+      type: string
+      enum:
+        - white
+        - black
+        - jester
 
     Piece:
       type: object
-      required: []          # TODO
-      properties: {}        # TODO
-      # QUESTION : le Bouffon est-il une pièce, un joueur, ou les deux ?
-
-    Board:
-      type: object
-      required: []          # TODO
-      properties: {}        # TODO : état ? tour ? pièces ? résultat ?
-
-    Lobby:
-      type: object
+      required:
+        - id
+        - type
+        - owner
+        - square
       properties:
         id:
           type: string
+        type:
+          type: string
+        owner:
+          $ref: '#/components/schemas/PlayerRole'
+        square:
+          $ref: '#/components/schemas/Square'
+
+    BoardStatus:
+      type: string
+      enum:
+        - waiting
+        - in_progress
+        - finished
+
+    GameOutcome:
+      type: object
+      required:
+        - winner
+        - reason
+      properties:
+        winner:
+          oneOf:
+            - $ref: '#/components/schemas/PlayerRole'
+            - type: 'null'
+        reason:
+          type: string
+          enum:
+            - no_pieces_left
+            - specific_rule
+
+    GameState:
+      type: object
+      required:
+        - status
+        - turn
+        - players
+      properties:
+        status:
+          $ref: '#/components/schemas/BoardStatus'
+        turn:
+          $ref: '#/components/schemas/PlayerRole'
+        ruleSet:
+          type: string
+          default: standard
         players:
           type: array
           items:
-            type: string
+            type: object
+            required:
+              - playerId
+              - role
+            properties:
+              playerId:
+                type: string
+              role:
+                $ref: '#/components/schemas/PlayerRole'
+        outcome:
+          oneOf:
+            - $ref: '#/components/schemas/GameOutcome'
+            - type: 'null'
+
+    Board:
+      type: object
+      required:
+        - pieces
+      properties:
+        pieces:
+          type: array
+          items:
+            $ref: '#/components/schemas/Piece'
+
+    BoardState:
+      type: object
+      required:
+        - id
+        - gameState
+        - board
+      properties:
+        id:
+          type: string
+        gameState:
+          $ref: '#/components/schemas/GameState'
+        board:
+          $ref: '#/components/schemas/Board'
+
+    BoardStateUpdate:
+      type: object
+      required:
+        - gameState
+        - board
+      properties:
+        gameState:
+          type: object
+          required:
+            - status
+            - turn
+          properties:
+            status:
+              $ref: '#/components/schemas/BoardStatus'
+            turn:
+              $ref: '#/components/schemas/PlayerRole'
+            ruleSet:
+              type: string
+            outcome:
+              oneOf:
+                - $ref: '#/components/schemas/GameOutcome'
+                - type: 'null'
+        board:
+          $ref: '#/components/schemas/Board'
 
     PlayerAccess:
       type: object
-      properties: {}        # TODO : ce que reçoit un joueur pour jouer
-
-    MoveRequest:
-      type: object
-      required: []          # TODO
-      properties: {}        # TODO
-
-    Event:
-      type: object
-      properties: {}        # TODO
+      required:
+        - boardId
+        - playerId
+        - role
+        - token
+      properties:
+        boardId:
+          type: string
+        playerId:
+          type: string
+        role:
+          $ref: '#/components/schemas/PlayerRole'
+        token:
+          type: string
 
     Error:
       type: object
-      properties: {}        # TODO : format d'erreur commun à tous les endpoints
-
-# =============================================================================
-#  CHECKLIST
-# =============================================================================
-#  [ ] Chaque story Must est couverte par au moins un des 5 endpoints
-#  [ ] Chaque endpoint a son code de succès ET ses codes d'erreur
-#  [ ] Aucun endpoint ne demande de compte (authentification = Won't)
-#  [ ] Les schémas sont réutilisés avec $ref, pas copiés
-#  [ ] Le fichier passe sans erreur dans Swagger Editor
-# =============================================================================
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
