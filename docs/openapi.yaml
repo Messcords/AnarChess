@@ -25,7 +25,7 @@
 openapi: 3.1.0
 info:
   title: AnarChess API
-  version: 0.2.0
+  version: 0.3.0
   description: |
     Contrat entre le frontend et le backend d'AnarChess, un jeu d'échecs où
     l'anarchie règne. Dans le modèle du jeu, le troisième joueur est nommé
@@ -76,6 +76,7 @@ paths:
                 status: playing
                 turn: white
                 moveCount: 1
+                lastMove: { from: e2, to: e4 }
                 pieces:
                   - { id: w-king, type: king, owner: white, square: e1 }
                   - { id: b-king, type: king, owner: black, square: e8 }
@@ -249,6 +250,11 @@ paths:
           required: false
           description: Ne renvoyer que les événements de numéro strictement supérieur
           schema: { type: integer, minimum: 0, default: 0 }
+        - name: limit
+          in: query
+          required: false
+          description: Nombre maximum d'événements renvoyés (les plus anciens d'abord)
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
       responses:
         '200':
           description: Liste des événements, éventuellement vide
@@ -433,6 +439,9 @@ components:
           type: integer
           minimum: 0
           description: Nombre de coups joués depuis le début de la partie
+        lastMove:
+          description: Dernier coup joué, pour le surligner (absent avant le premier coup)
+          $ref: '#/components/schemas/Move'
         pieces:
           type: array
           items:
@@ -508,6 +517,10 @@ components:
           $ref: '#/components/schemas/Color'
 
     MoveRequest:
+      description: Coup envoyé par le joueur
+      $ref: '#/components/schemas/Move'
+
+    Move:
       type: object
       additionalProperties: false
       required: [from, to]
@@ -578,6 +591,25 @@ components:
           description: Effets de l'événement sur le plateau (vide s'il n'en a pas)
           items:
             $ref: '#/components/schemas/BoardChange'
+        move:
+          description: Coup joué — présent si et seulement si type = move
+          $ref: '#/components/schemas/Move'
+        result:
+          description: Issue de la partie — présente si et seulement si type = game_over
+          $ref: '#/components/schemas/GameResult'
+      allOf:
+        - if:
+            properties: { type: { const: move } }
+          then:
+            required: [move]
+          else:
+            not: { required: [move] }
+        - if:
+            properties: { type: { const: game_over } }
+          then:
+            required: [result]
+          else:
+            not: { required: [result] }
 
     ErrorCode:
       type: string
