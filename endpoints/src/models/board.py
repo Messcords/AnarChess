@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 
 PlayerRole = Literal["white", "black", "jester"]
 BoardStatus = Literal["waiting", "in_progress", "finished"]
-BoardRow = Annotated[list[StrictStr | None], Field(min_length=8, max_length=8)]
+BoardRow = Annotated[list[StrictStr], Field(min_length=8, max_length=8)]
 Board = Annotated[list[BoardRow], Field(min_length=8, max_length=8)]
 
 

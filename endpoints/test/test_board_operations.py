@@ -48,7 +48,7 @@ def test_update_and_reset_board() -> None:
         black = client.post(f"/boards/{board_id}/join").json()
         headers = {"X-Player-Token": black["token"]}
         board = deepcopy(white["board"])
-        board[6][0] = None
+        board[6][0] = ""
         board[4][0] = "wP"
         payload = {
             "gameState": {"status": "in_progress", "turn": "black"},
@@ -66,6 +66,16 @@ def test_update_and_reset_board() -> None:
         assert (
             client.patch(
                 f"/boards/{board_id}", json={**payload, "board": [[]]}, headers=headers
+            ).status_code
+            == 400
+        )
+        invalid_board = deepcopy(board)
+        invalid_board[6][0] = None
+        assert (
+            client.patch(
+                f"/boards/{board_id}",
+                json={**payload, "board": invalid_board},
+                headers=headers,
             ).status_code
             == 400
         )
@@ -138,5 +148,6 @@ def test_generated_openapi_describes_board_matrix() -> None:
     assert board["type"] == "array"
     assert board["minItems"] == board["maxItems"] == 8
     assert board["items"]["minItems"] == board["items"]["maxItems"] == 8
+    assert board["items"]["items"]["type"] == "string"
     access = schema["components"]["schemas"]["CreatedPlayerAccess"]
     assert "board" in access["required"]

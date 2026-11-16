@@ -19,7 +19,7 @@ def initial_board() -> Board:
     return [
         ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
         ["bP"] * 8,
-        *[[None] * 8 for _ in range(4)],
+        *[[""] * 8 for _ in range(4)],
         ["wP"] * 8,
         ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"],
     ]

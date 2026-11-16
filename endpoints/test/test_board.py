@@ -15,10 +15,10 @@ def test_create_board_returns_player_access() -> None:
     assert player_access["board"] == [
         ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
         ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
-        [None, None, None, None, None, None, None, None],
-        [None, None, None, None, None, None, None, None],
-        [None, None, None, None, None, None, None, None],
-        [None, None, None, None, None, None, None, None],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
         ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
         ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"],
     ]
@@ -72,10 +72,10 @@ def test_get_board_state() -> None:
     assert state["board"] == [
         ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
         ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
-        [None, None, None, None, None, None, None, None],
-        [None, None, None, None, None, None, None, None],
-        [None, None, None, None, None, None, None, None],
-        [None, None, None, None, None, None, None, None],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
         ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
         ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"],
     ]
