@@ -1,0 +1,13 @@
+# Only hook: the load tests, and only when a commit touches the API code.
+# Install once with `make hooks` (from endpoints/). Details: endpoints/load/precommit.py
+# Skip it once with: SKIP=load-test git commit ...
+repos:
+  - repo: local
+    hooks:
+      - id: load-test
+        name: load tests (API code changed)
+        entry: uv run --directory endpoints --no-sync python load/precommit.py
+        language: system
+        files: ^endpoints/src/(api/|services/|models/|main\.py$)
+        pass_filenames: false
+        stages: [pre-commit]
