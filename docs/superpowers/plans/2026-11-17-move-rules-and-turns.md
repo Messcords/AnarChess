@@ -26,14 +26,18 @@ tour blancs/noirs » — https://github.com/Messcords/AnarChess/issues/16
   partie, envoi au back, glisser-déposer, animations. **Ajout demandé par
   l'utilisateur après la tâche 2** : roque et promotion automatique en dame
   (tâche 2b).
-- Deux sous-objectifs, **une branche chacun**, partant de `develop` :
+- Deux sous-objectifs, **une branche chacun**, partant de `dev` (la branche
+  d'équipe de `CONTRIBUTING.md` ; une branche `develop` avait d'abord été
+  créée par erreur, la branche 1 a été rebasée sur `origin/dev`) :
   1. `feat/16-piece-move-rules` — tâches 1, 2 et 2b (règles de déplacement) ;
-  2. `feat/16-turn-order` — tâches 3 à 4 (tour par tour), créée depuis
-     `develop` **après** le merge de la branche 1.
-- Fin de branche : l'utilisateur pousse, ouvre la PR vers `develop` et la
-  fusionne ; **attendre son merge** avant la branche suivante.
-- **Je ne commite pas.** À chaque point de commit : donner la liste
-  `git add` et le message ; l'utilisateur commite lui-même.
+  2. `feat/16-turn-order` — tâches 3 à 4 (tour par tour). Prévue depuis
+     `dev` après le merge de la branche 1 ; **finalement empilée sur la
+     branche 1** (l'utilisateur a demandé de continuer avant le merge) : à
+     fusionner après elle.
+- Fin de branche : l'utilisateur ouvre la PR vers `dev` et la fusionne.
+- Commits : d'abord faits par l'utilisateur ; **depuis l'ajout de
+  `AGENT.md`, l'agent commite lui-même**, sans jamais s'ajouter comme
+  contributeur, et en regroupant comme l'utilisateur le demande.
 - Avant chaque commit, depuis `screens/` : `make lint` puis `make check`,
   sans erreur **ni warning** ; corriger avant de proposer le commit.
 - TDD : le test d'abord, le voir échouer, puis le code minimal.
@@ -69,7 +73,7 @@ tour blancs/noirs » — https://github.com/Messcords/AnarChess/issues/16
 
 ## Branche 1 — `feat/16-piece-move-rules` (règles de déplacement)
 
-Mise en place (déjà faite) : `git switch -c feat/16-piece-move-rules develop`.
+Mise en place (déjà faite) : `git switch -c feat/16-piece-move-rules dev`.
 
 **Commit 0 (doc)** — ce plan et `AGENT.md` (consignes pour les agents) :
 
@@ -301,7 +305,7 @@ affiche un cercle.
 Expected : eslint muet, tests PASS sans warning, comportement conforme.
 
 - [x] **Step 7: STOP — commit par l'utilisateur**, puis fin de branche
-(push + PR vers `develop` + merge par l'utilisateur ; attendre).
+(push + PR vers `dev` + merge par l'utilisateur ; attendre).
 
 ```bash
 git add screens/app/components/display/Board.vue screens/test/components/display/Board.spec.ts \
@@ -362,9 +366,12 @@ de l'autre côté il se transforme en reine, avec du code simple »).
 ## Branche 2 — `feat/16-turn-order` (tour par tour)
 
 Après le merge de la branche 1 :
-`git switch develop && git pull && git switch -c feat/16-turn-order`.
+`git switch dev && git pull && git switch -c feat/16-turn-order`.
 
 ### Task 3: Seul le camp dont c'est le tour peut sélectionner
+
+> Réalisée dans le même commit que la tâche 4 : seule, elle cassait la page
+> (les noirs ne pouvaient plus jouer tant que la page ne passait pas `turn`).
 
 **Files:**
 - Modify: `screens/app/components/display/Board.vue` (prop `turn`, règle de sélection)
@@ -494,7 +501,7 @@ Expected: PASS (tous).
 `make serve` : jouer e2-e4, d7-d5, e4xd5 et vérifier l'indicateur à chaque coup.
 
 - [ ] **Step 7: STOP — commit par l'utilisateur**, puis fin de branche
-(push + PR vers `develop` + merge par l'utilisateur).
+(push + PR vers `dev` + merge par l'utilisateur).
 
 ```bash
 git add screens/app/pages/index.vue screens/test/pages/index.spec.ts docs/superpowers/plans/2026-11-17-move-rules-and-turns.md
