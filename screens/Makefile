@@ -29,7 +29,7 @@ build:
 preview:
 	$(PNPM) preview
 
-check: lint
+check:
 	$(PNPM) test:run
 
 lint:

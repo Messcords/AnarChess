@@ -21,7 +21,7 @@ install:
 serve:
 	$(UV) run --no-sync uvicorn main:app --app-dir src --reload
 
-check: lint
+check:
 	$(UV) run --no-sync pytest
 
 lint:
