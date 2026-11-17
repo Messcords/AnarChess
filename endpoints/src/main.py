@@ -25,8 +25,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.include_router(boards_router)
-app.include_router(items.router)
-
 
 @app.exception_handler(BoardError)
 async def board_error_handler(request: Request, exc: BoardError) -> JSONResponse:
