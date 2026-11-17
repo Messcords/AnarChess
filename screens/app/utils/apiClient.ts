@@ -2,10 +2,13 @@ import { parseApiError } from './apiError'
 
 const BASE_URL = 'http://localhost:4010'
 
+export type Board = string[][]
+
 export interface PlayerAccess {
   boardId: string
+  board?: Board
   playerId: string
-  role: 'white' | 'black' | 'jester'
+  role: 'white' | 'black'
   token: string
 }
 
