@@ -32,6 +32,7 @@ make serve   # http://localhost:3000
 ```
 
 Dans les deux dossiers, `make check` lance le lint et les tests, et `make help` liste les commandes.
+Côté backend, `make contract` vérifie que l'API respecte le contrat [docs/openapi.yaml](docs/openapi.yaml) avec Schemathesis (voir [endpoints/README.md](endpoints/README.md#tests-de-contrat-schemathesis)).
 
 ## Documentation
 
