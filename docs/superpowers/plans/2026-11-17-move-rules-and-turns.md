@@ -28,12 +28,14 @@ tour blancs/noirs » — https://github.com/Messcords/AnarChess/issues/16
   (tâche 2b).
 - Deux sous-objectifs, **une branche chacun**, partant de `develop` :
   1. `feat/16-piece-move-rules` — tâches 1, 2 et 2b (règles de déplacement) ;
-  2. `feat/16-turn-order` — tâches 3 à 4 (tour par tour), créée depuis
-     `develop` **après** le merge de la branche 1.
-- Fin de branche : l'utilisateur pousse, ouvre la PR vers `develop` et la
-  fusionne ; **attendre son merge** avant la branche suivante.
-- **Je ne commite pas.** À chaque point de commit : donner la liste
-  `git add` et le message ; l'utilisateur commite lui-même.
+  2. `feat/16-turn-order` — tâches 3 à 4 (tour par tour). Prévue depuis
+     `develop` après le merge de la branche 1 ; **finalement empilée sur la
+     branche 1** (l'utilisateur a demandé de continuer avant le merge) : à
+     fusionner après elle.
+- Fin de branche : l'utilisateur ouvre la PR vers `develop` et la fusionne.
+- Commits : d'abord faits par l'utilisateur ; **depuis l'ajout de
+  `AGENT.md`, l'agent commite lui-même**, sans jamais s'ajouter comme
+  contributeur, et en regroupant comme l'utilisateur le demande.
 - Avant chaque commit, depuis `screens/` : `make lint` puis `make check`,
   sans erreur **ni warning** ; corriger avant de proposer le commit.
 - TDD : le test d'abord, le voir échouer, puis le code minimal.
@@ -365,6 +367,9 @@ Après le merge de la branche 1 :
 `git switch develop && git pull && git switch -c feat/16-turn-order`.
 
 ### Task 3: Seul le camp dont c'est le tour peut sélectionner
+
+> Réalisée dans le même commit que la tâche 4 : seule, elle cassait la page
+> (les noirs ne pouvaient plus jouer tant que la page ne passait pas `turn`).
 
 **Files:**
 - Modify: `screens/app/components/display/Board.vue` (prop `turn`, règle de sélection)
