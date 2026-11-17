@@ -7,6 +7,31 @@
 3. Vérifiez qu’elles fonctionnent : exécutez les tests et le lint.
 4. Ouvrez une pull request vers `dev`, avec une description claire de vos changements.
 
+## Hook pre-commit : tests de charge
+
+Le hook pre-commit ne fait qu’une chose : lancer les tests de charge
+(Locust) **quand un commit touche le code de l’API** (`endpoints/src/api/`,
+`services/`, `models/` ou `main.py`). Les autres commits ne sont pas ralentis.
+
+| Changement commité | Tests lancés | Durée |
+|--------------------|--------------|-------|
+| Pas de code API | Aucun | — |
+| Code API, moins de 50 lignes, hors routes | `load-race` et `load-create` (accès simultanés) | ~15 s |
+| Routes (`src/api/`) ou 50 lignes et plus | Les mêmes, plus `load` (parties complètes) | ~25 s |
+
+Le commit est bloqué si une place est accordée plusieurs fois, si un
+`boardId` est en double, ou si `load` a des échecs ou un p95 au-dessus de
+200 ms. Les rapports sont écrits dans `docs/charge/`.
+
+Installation, une fois par clone, depuis `endpoints` (après `make install`) :
+
+```bash
+make hooks
+```
+
+Pour passer le test une fois : `SKIP=load-test git commit ...`. Les seuils se
+changent avec les variables `LOAD_FULL_LINES` et `LOAD_P95_LIMIT`.
+
 ## Merge d’une pull request
 
 Une pull request peut être fusionnée uniquement si les conditions suivantes sont réunies :

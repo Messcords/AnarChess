@@ -1,7 +1,7 @@
 UV ?= uv
 .DEFAULT_GOAL := help
 
-.PHONY: help install serve check contract load load-race load-create load-ui lint fix audit
+.PHONY: help install serve check contract load load-race load-create load-ui lint fix audit hooks
 
 help:
 	@printf '%s\n' \
@@ -19,7 +19,8 @@ help:
 		'  load-ui      Start the Locust web UI on http://localhost:8089' \
 		'  lint         Check code with Ruff' \
 		'  fix          Apply Ruff fixes and formatting' \
-		'  audit        Check dependencies for security vulnerabilities'
+		'  audit        Check dependencies for security vulnerabilities' \
+		'  hooks        Install the pre-commit hook (load tests on API changes)'
 
 install:
 	$(UV) sync --no-install-project
@@ -69,3 +70,6 @@ fix:
 
 audit:
 	$(UV) run --no-sync pip-audit
+
+hooks:
+	$(UV) run --no-sync pre-commit install
