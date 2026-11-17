@@ -421,7 +421,7 @@ Après le merge de la branche 1 :
   `pieceColor(code) === turn` ; cette règle remplace « même couleur que la
   pièce sélectionnée » de la tâche 2.
 
-- [ ] **Step 1: Write the failing tests** — nouveau `describe('Board turn')` :
+- [x] **Step 1: Write the failing tests** — nouveau `describe('Board turn')` :
 
 ```ts
 it('only lets white pick a piece by default', async () => {
@@ -441,23 +441,23 @@ it('only lets black pick a piece on their turn', async () => {
 })
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm test:run test/components`
 Expected: FAIL sur les deux nouveaux tests (e7 sélectionnable par défaut).
 
-- [ ] **Step 3: Implement** la prop `turn` et la règle de sélection.
+- [x] **Step 3: Implement** la prop `turn` et la règle de sélection.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm test:run`
 Expected: PASS (tous).
 
-- [ ] **Step 5: Doc** — cocher les étapes de la tâche 3 dans ce plan.
+- [x] **Step 5: Doc** — cocher les étapes de la tâche 3 dans ce plan.
 
-- [ ] **Step 6: Verify before commit** — `make lint && make check`, muets / PASS.
+- [x] **Step 6: Verify before commit** — `make lint && make check`, muets / PASS.
 
-- [ ] **Step 7: STOP — commit par l'utilisateur**
+- [x] **Step 7: STOP — commit par l'utilisateur**
 
 ```bash
 git add screens/app/components/display/Board.vue screens/test/components/display/Board.spec.ts docs/superpowers/plans/2026-11-17-move-rules-and-turns.md
@@ -479,7 +479,7 @@ git commit -m "Let only the side to move pick a piece" -m "Refs #16"
   `<p class="turn" data-testid="turn" aria-live="polite">` avec le texte
   exact « Au tour des blancs » / « Au tour des noirs ».
 
-- [ ] **Step 1: Write the failing tests** dans `index.spec.ts` :
+- [x] **Step 1: Write the failing tests** dans `index.spec.ts` :
 
 ```ts
 it('starts with white to move', async () => {
@@ -517,26 +517,26 @@ Mettre à jour « clears a pending selection on reset » : `e2→e4`, puis
 sélectionner `e7` (noir), « Réinitialiser » → aucune `.selected`, puis
 un clic sur `d2` la sélectionne.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm test:run test/pages`
 Expected: FAIL (pas d'indicateur `data-testid="turn"`, e7 non sélectionnable après e2→e4).
 
-- [ ] **Step 3: Implement** l'état `turn`, le changement de tour dans
+- [x] **Step 3: Implement** l'état `turn`, le changement de tour dans
 `onMove`, la remise à `'white'` dans `reset`, l'indicateur et `:turn` sur
 `<DisplayBoard>`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm test:run`
 Expected: PASS (tous).
 
-- [ ] **Step 5: Doc** — cocher les étapes de la tâche 4 dans ce plan.
+- [x] **Step 5: Doc** — cocher les étapes de la tâche 4 dans ce plan.
 
-- [ ] **Step 6: Verify before commit** — `make lint && make check`, puis
+- [x] **Step 6: Verify before commit** — `make lint && make check`, puis
 `make serve` : jouer e2-e4, d7-d5, e4xd5 et vérifier l'indicateur à chaque coup.
 
-- [ ] **Step 7: STOP — commit par l'utilisateur**, puis fin de branche
+- [x] **Step 7: STOP — commit par l'utilisateur**, puis fin de branche
 (push + PR vers `dev` + merge par l'utilisateur).
 
 ```bash

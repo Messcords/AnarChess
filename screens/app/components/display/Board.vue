@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { FILES, RANKS, boardSquares, isLightSquare, type Square } from '~/utils/chess'
-import { cellAt, pieceColor, pieceGlyph, type BoardMatrix, type PieceCode } from '~/utils/pieces'
+import {
+  cellAt,
+  pieceColor,
+  pieceGlyph,
+  type BoardMatrix,
+  type Color,
+  type PieceCode,
+} from '~/utils/pieces'
 import {
   PROMOTION_PIECES,
   isPromotion,
@@ -22,11 +29,14 @@ type Props = {
   board?: BoardMatrix
   // Moves already played, needed to know if castling is still allowed.
   history?: Move[]
+  // The side to move: only its pieces can be picked.
+  turn?: Color
 }
 
 const props = withDefaults(defineProps<Props>(), {
   board: () => [],
   history: () => [],
+  turn: 'white',
 })
 
 const emit = defineEmits<{
@@ -85,21 +95,13 @@ function canSelect(square: Square, from: Square | null): boolean {
   if (piece === '' || square === from) {
     return false
   }
-  if (from === null) {
-    return true
-  }
-
-  const selectedPiece = cellAt(props.board, from)
-  if (selectedPiece === '') {
-    return false
-  }
-  return pieceColor(piece) === pieceColor(selectedPiece)
+  return pieceColor(piece) === props.turn
 }
 
 /**
  * Two-click move. The first click picks a piece. The second click plays
  * the move if the square is a legal target, picks another piece of the
- * same color, or cancels the selection. A pawn reaching the last rank
+ * side to move, or cancels the selection. A pawn reaching the last rank
  * first opens the promotion choice. The parent applies the move.
  */
 function onSquareClick(square: Square) {

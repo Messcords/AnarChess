@@ -166,3 +166,25 @@ describe('Board promotion', () => {
     expect(wrapper.find('.promotion').exists()).toBe(false)
   })
 })
+
+describe('Board turn', () => {
+  it('only lets white pick a piece by default', async () => {
+    const wrapper = mount(Board, { props: { board: initialBoard() } })
+
+    await wrapper.get('[data-square="e7"]').trigger('click')
+    expect(wrapper.findAll('.selected')).toHaveLength(0)
+
+    await wrapper.get('[data-square="e2"]').trigger('click')
+    expect(wrapper.get('[data-square="e2"]').classes()).toContain('selected')
+  })
+
+  it('only lets black pick a piece on their turn', async () => {
+    const wrapper = mount(Board, { props: { board: initialBoard(), turn: 'black' } })
+
+    await wrapper.get('[data-square="e2"]').trigger('click')
+    expect(wrapper.findAll('.selected')).toHaveLength(0)
+
+    await wrapper.get('[data-square="e7"]').trigger('click')
+    expect(squaresWith(wrapper, 'target')).toEqual(['e5', 'e6'])
+  })
+})

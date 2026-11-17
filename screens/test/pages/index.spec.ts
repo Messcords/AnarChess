@@ -75,10 +75,44 @@ describe('home page', () => {
     const page = await mountSuspended(IndexPage)
     await page.get('[data-square="e2"]').trigger('click')
     await page.get('[data-square="e4"]').trigger('click')
-    await page.get('[data-square="e4"]').trigger('click')
+    await page.get('[data-square="e7"]').trigger('click')
+    expect(page.get('[data-square="e7"]').classes()).toContain('selected')
+
     await page.get('[data-testid="reset"]').trigger('click')
     expect(page.findAll('.selected')).toHaveLength(0)
+
     await page.get('[data-square="d2"]').trigger('click')
     expect(page.get('[data-square="d2"]').classes()).toContain('selected')
+  })
+
+  it('starts with white to move', async () => {
+    const page = await mountSuspended(IndexPage)
+    expect(page.get('[data-testid="turn"]').text()).toBe('Au tour des blancs')
+  })
+
+  it('gives the turn to black after a white move', async () => {
+    const page = await mountSuspended(IndexPage)
+    await page.get('[data-square="e2"]').trigger('click')
+    await page.get('[data-square="e4"]').trigger('click')
+    expect(page.get('[data-testid="turn"]').text()).toBe('Au tour des noirs')
+
+    await page.get('[data-square="e4"]').trigger('click')
+    expect(page.findAll('.selected')).toHaveLength(0)
+  })
+
+  it('keeps the turn after an illegal click', async () => {
+    const page = await mountSuspended(IndexPage)
+    await page.get('[data-square="e2"]').trigger('click')
+    await page.get('[data-square="e5"]').trigger('click')
+    expect(page.get('[data-testid="turn"]').text()).toBe('Au tour des blancs')
+    expect(page.get('[data-square="e2"]').text()).toContain('♙')
+  })
+
+  it('gives the turn back to white on reset', async () => {
+    const page = await mountSuspended(IndexPage)
+    await page.get('[data-square="e2"]').trigger('click')
+    await page.get('[data-square="e4"]').trigger('click')
+    await page.get('[data-testid="reset"]').trigger('click')
+    expect(page.get('[data-testid="turn"]').text()).toBe('Au tour des blancs')
   })
 })
