@@ -139,3 +139,30 @@ describe('Board castling', () => {
     expect(squaresWith(moved, 'target')).not.toContain('g1')
   })
 })
+
+describe('Board promotion', () => {
+  it('asks which piece the pawn becomes before playing the move', async () => {
+    const wrapper = mount(Board, { props: { board: boardWith({ e7: 'wP' }) } })
+    await wrapper.get('[data-square="e7"]').trigger('click')
+    await wrapper.get('[data-square="e8"]').trigger('click')
+    expect(wrapper.emitted('move')).toBeUndefined()
+
+    const choices = wrapper.findAll('[data-promotion]')
+    expect(choices.map((choice) => choice.attributes('data-promotion'))).toEqual(['Q', 'R', 'B', 'N'])
+    expect(wrapper.get('[data-promotion="N"]').text()).toContain('♘')
+
+    await wrapper.get('[data-promotion="N"]').trigger('click')
+    expect(wrapper.emitted('move')).toEqual([['e7', 'e8', 'N']])
+    expect(wrapper.find('.promotion').exists()).toBe(false)
+  })
+
+  it('plays nothing when the promotion is cancelled', async () => {
+    const wrapper = mount(Board, { props: { board: boardWith({ e7: 'wP' }) } })
+    await wrapper.get('[data-square="e7"]').trigger('click')
+    await wrapper.get('[data-square="e8"]').trigger('click')
+    await wrapper.get('[data-testid="promotion-cancel"]').trigger('click')
+
+    expect(wrapper.emitted('move')).toBeUndefined()
+    expect(wrapper.find('.promotion').exists()).toBe(false)
+  })
+})

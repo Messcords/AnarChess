@@ -361,6 +361,42 @@ de l'autre côté il se transforme en reine, avec du code simple »).
   essai dans le navigateur (roque et promotion).
 - [x] **Step 7: Commit (un seul)** — `Add castling and queen promotion`, `Refs #16`.
 
+### Task 2c: Le joueur choisit la pièce de promotion
+
+Demandé par l'utilisateur : au lieu d'une dame automatique, le joueur
+choisit en quelle pièce son pion se transforme.
+
+**Files:**
+- Modify: `screens/app/utils/rules.ts` (`PromotionPiece`, `PROMOTION_PIECES`, `isPromotion`, `promotedPiece`, `playMove` avec un choix)
+- Modify: `screens/app/components/display/Board.vue` (panneau de choix)
+- Modify: `screens/app/pages/index.vue` (transmet le choix à `playMove`)
+- Test: `screens/test/utils/rules.spec.ts`, `screens/test/components/display/Board.spec.ts`, `screens/test/pages/index.spec.ts`
+
+**Interfaces:**
+- `export type PromotionPiece = 'Q' | 'R' | 'B' | 'N'` et
+  `export const PROMOTION_PIECES: PromotionPiece[] = ['Q', 'R', 'B', 'N']`.
+- `export function isPromotion(board, from, to): boolean` — un pion blanc
+  qui arrive sur la rangée 8, ou un pion noir sur la rangée 1.
+- `export function promotedPiece(pawn: PieceCode, choice: PromotionPiece): PieceCode`
+  — `('wP', 'N')` → `'wN'`.
+- `playMove(board, from, to, promotion: PromotionPiece = 'Q')`.
+- `Board.vue` : event `move: [from, to, promotion?]`. Un coup de promotion
+  n'est pas émis tout de suite : un panneau (`.promotion`, boutons
+  `[data-promotion="Q|R|B|N"]` et `[data-testid="promotion-cancel"]`)
+  propose les 4 pièces de la couleur du pion. Choisir → émettre le coup
+  avec la pièce ; « Annuler » ou un clic sur le plateau → rien n'est joué.
+- Page : `onMove(from, to, promotion)` → `playMove(board, from, to, promotion)`.
+
+- [x] **Step 1: Write the failing tests** — `isPromotion`, `promotedPiece`,
+  `playMove` avec cavalier / tour ; panneau du plateau (choix et
+  annulation) ; page : a4 h6 a5 h5 a6 h4 axb7 h3 bxa8 puis cavalier → `♘` en a8.
+- [x] **Step 2: Run the tests to verify they fail** — `pnpm test:run`.
+- [x] **Step 3: Implement**.
+- [x] **Step 4: Run the tests to verify they pass** — `pnpm test:run`.
+- [x] **Step 5: Doc** — cocher les étapes de la tâche 2c.
+- [x] **Step 6: Verify before commit** — `make lint && make check` + navigateur.
+- [x] **Step 7: Commit (un seul)** — `Let the player choose the promotion piece`, `Refs #16`.
+
 ---
 
 ## Branche 2 — `feat/16-turn-order` (tour par tour)

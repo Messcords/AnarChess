@@ -51,6 +51,26 @@ describe('home page', () => {
     expect(page.find('[data-square="h1"] .piece').exists()).toBe(false)
   })
 
+  it('promotes a pawn into the piece chosen by the player', async () => {
+    const page = await mountSuspended(IndexPage)
+    const play = async (from: string, to: string) => {
+      await page.get(`[data-square="${from}"]`).trigger('click')
+      await page.get(`[data-square="${to}"]`).trigger('click')
+    }
+    await play('a2', 'a4')
+    await play('h7', 'h6')
+    await play('a4', 'a5')
+    await play('h6', 'h5')
+    await play('a5', 'a6')
+    await play('h5', 'h4')
+    await play('a6', 'b7')
+    await play('h4', 'h3')
+    await play('b7', 'a8')
+    await page.get('[data-promotion="N"]').trigger('click')
+
+    expect(page.get('[data-square="a8"]').text()).toContain('♘')
+  })
+
   it('clears a pending selection on reset', async () => {
     const page = await mountSuspended(IndexPage)
     await page.get('[data-square="e2"]').trigger('click')

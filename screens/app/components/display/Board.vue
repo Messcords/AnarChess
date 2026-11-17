@@ -1,7 +1,21 @@
 <script setup lang="ts">
 import { FILES, RANKS, boardSquares, isLightSquare, type Square } from '~/utils/chess'
-import { cellAt, pieceColor, pieceGlyph, type BoardMatrix } from '~/utils/pieces'
-import { legalMoves, type Move } from '~/utils/rules'
+import { cellAt, pieceColor, pieceGlyph, type BoardMatrix, type PieceCode } from '~/utils/pieces'
+import {
+  PROMOTION_PIECES,
+  isPromotion,
+  legalMoves,
+  promotedPiece,
+  type Move,
+  type PromotionPiece,
+} from '~/utils/rules'
+
+const PROMOTION_LABELS: Record<PromotionPiece, string> = {
+  Q: 'Dame',
+  R: 'Tour',
+  B: 'Fou',
+  N: 'Cavalier',
+}
 
 type Props = {
   // The API contract board: 8×8 matrix of piece codes ('' = empty square).
@@ -16,18 +30,39 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  move: [from: Square, to: Square]
+  move: [from: Square, to: Square, promotion?: PromotionPiece]
 }>()
 
 const selected = ref<Square | null>(null)
+
+// A pawn move waiting for the player to choose the new piece.
+const pendingPromotion = ref<Move | null>(null)
 
 // A new position (move applied, reset…) invalidates any pending selection.
 watch(
   () => props.board,
   () => {
     selected.value = null
+    pendingPromotion.value = null
   },
 )
+
+const promotionChoices = computed(() => {
+  const move = pendingPromotion.value
+  if (move === null) {
+    return []
+  }
+
+  const pawn = cellAt(props.board, move.from) as PieceCode
+  return PROMOTION_PIECES.map((choice) => {
+    const newPiece = promotedPiece(pawn, choice)
+    return {
+      choice,
+      glyph: pieceGlyph(newPiece),
+      label: PROMOTION_LABELS[choice],
+    }
+  })
+})
 
 const targets = computed(() => {
   if (selected.value === null) {
@@ -64,15 +99,25 @@ function canSelect(square: Square, from: Square | null): boolean {
 /**
  * Two-click move. The first click picks a piece. The second click plays
  * the move if the square is a legal target, picks another piece of the
- * same color, or cancels the selection. The parent applies the move.
+ * same color, or cancels the selection. A pawn reaching the last rank
+ * first opens the promotion choice. The parent applies the move.
  */
 function onSquareClick(square: Square) {
+  if (pendingPromotion.value !== null) {
+    cancelPromotion()
+    return
+  }
+
   const from = selected.value
   const isLegalTarget = targets.value.includes(square)
 
   if (from !== null && isLegalTarget) {
-    emit('move', from, square)
     selected.value = null
+    if (isPromotion(props.board, from, square)) {
+      pendingPromotion.value = { from, to: square }
+      return
+    }
+    emit('move', from, square)
     return
   }
 
@@ -81,6 +126,19 @@ function onSquareClick(square: Square) {
   } else {
     selected.value = null
   }
+}
+
+function choosePromotion(choice: PromotionPiece) {
+  const move = pendingPromotion.value
+  if (move === null) {
+    return
+  }
+  pendingPromotion.value = null
+  emit('move', move.from, move.to, choice)
+}
+
+function cancelPromotion() {
+  pendingPromotion.value = null
 }
 </script>
 
@@ -111,6 +169,26 @@ function onSquareClick(square: Square) {
       >
         <span v-if="code" class="piece" :data-piece="code">{{ pieceGlyph(code) }}</span>
       </button>
+
+      <div v-if="pendingPromotion" class="promotion" role="dialog" aria-label="Choisir la pièce de promotion">
+        <p class="promotion-title">Promotion</p>
+        <div class="promotion-choices">
+          <button
+            v-for="{ choice, glyph, label } in promotionChoices"
+            :key="choice"
+            type="button"
+            class="promotion-choice"
+            :data-promotion="choice"
+            :aria-label="label"
+            @click="choosePromotion(choice)"
+          >
+            {{ glyph }}
+          </button>
+        </div>
+        <button type="button" class="promotion-cancel" data-testid="promotion-cancel" @click="cancelPromotion">
+          Annuler
+        </button>
+      </div>
     </div>
 
     <div class="files">
@@ -155,6 +233,50 @@ function onSquareClick(square: Square) {
   grid-template-columns: repeat(8, 1fr);
   width: var(--size);
   border: 2px solid #6b4f36;
+  position: relative;
+}
+
+/* Promotion choice: a panel over the board. */
+.promotion {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgb(0 0 0 / 45%);
+}
+
+.promotion-title {
+  margin: 0;
+  color: #fff;
+  font-weight: 600;
+}
+
+.promotion-choices {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.promotion-choice {
+  width: calc(var(--size) / 8);
+  aspect-ratio: 1;
+  border: 2px solid #6b4f36;
+  border-radius: 0.375rem;
+  background: var(--light);
+  font-size: calc(var(--size) / 8 * 0.6);
+  font-variant-emoji: text;
+  cursor: pointer;
+}
+
+.promotion-cancel {
+  padding: 0.25rem 1rem;
+  border: 1px solid #fff;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
 }
 
 .square {

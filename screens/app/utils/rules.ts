@@ -1,11 +1,16 @@
 import { coordsToSquare, squareToCoords, type Square } from '~/utils/chess'
-import { cellAt, movePiece, pieceColor, type BoardMatrix, type Color } from '~/utils/pieces'
+import { cellAt, movePiece, pieceColor, type BoardMatrix, type Color, type PieceCode } from '~/utils/pieces'
 
 // A move already played, kept by the page to know if a king or a rook has moved.
 export type Move = {
   from: Square
   to: Square
 }
+
+// The pieces a pawn can become: queen, rook, bishop or knight.
+export type PromotionPiece = 'Q' | 'R' | 'B' | 'N'
+
+export const PROMOTION_PIECES: PromotionPiece[] = ['Q', 'R', 'B', 'N']
 
 // A direction on the board: how many rows and columns we move at each step.
 type Direction = {
@@ -281,12 +286,31 @@ function moveRookIfCastling(board: BoardMatrix, kingFrom: Square, kingTo: Square
   return board
 }
 
+/** A pawn that reaches the last rank: white on rank 8, black on rank 1. */
+export function isPromotion(board: BoardMatrix, from: Square, to: Square): boolean {
+  const piece = cellAt(board, from)
+  const whitePawnOnLastRank = piece === 'wP' && to[1] === '8'
+  const blackPawnOnLastRank = piece === 'bP' && to[1] === '1'
+  return whitePawnOnLastRank || blackPawnOnLastRank
+}
+
+/** The piece a pawn becomes, in the color of the pawn: ('wP', 'N') gives 'wN'. */
+export function promotedPiece(pawn: PieceCode, choice: PromotionPiece): PieceCode {
+  const colorLetter = pawn[0]
+  return `${colorLetter}${choice}` as PieceCode
+}
+
 /**
  * Plays a legal move on the board. It works like movePiece, plus two rules:
  * when the king castles, the rook moves too, and a pawn that reaches the
- * last rank becomes a queen.
+ * last rank becomes the piece chosen by the player (a queen by default).
  */
-export function playMove(board: BoardMatrix, from: Square, to: Square): BoardMatrix {
+export function playMove(
+  board: BoardMatrix,
+  from: Square,
+  to: Square,
+  promotion: PromotionPiece = 'Q',
+): BoardMatrix {
   const piece = cellAt(board, from)
   let next = movePiece(board, from, to)
 
@@ -295,12 +319,9 @@ export function playMove(board: BoardMatrix, from: Square, to: Square): BoardMat
     next = moveRookIfCastling(next, from, to)
   }
 
-  const whitePawnOnLastRank = piece === 'wP' && to[1] === '8'
-  const blackPawnOnLastRank = piece === 'bP' && to[1] === '1'
-  if (whitePawnOnLastRank || blackPawnOnLastRank) {
+  if (piece !== '' && isPromotion(board, from, to)) {
     const [row, col] = squareToCoords(to)
-    const queen = whitePawnOnLastRank ? 'wQ' : 'bQ'
-    next[row]![col] = queen
+    next[row]![col] = promotedPiece(piece, promotion)
   }
   return next
 }
