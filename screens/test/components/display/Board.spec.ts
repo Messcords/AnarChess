@@ -1,7 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, type VueWrapper } from '@vue/test-utils'
 import Board from '@/components/display/Board.vue'
 import { initialBoard } from '~/utils/pieces'
+import { boardWith } from '../../helpers/board'
+
+/** The squares (e.g. ['e3', 'e4']) that have the given CSS class, sorted. */
+function squaresWith(wrapper: VueWrapper, cssClass: string): string[] {
+  return wrapper
+    .findAll(`.${cssClass}`)
+    .map((element) => element.attributes('data-square') ?? '')
+    .sort()
+}
 
 describe('Board', () => {
   it('Display of the board', () => {
@@ -69,5 +78,46 @@ describe('Board with pieces', () => {
     await wrapper.get('[data-square="e2"]').trigger('click')
     expect(wrapper.findAll('.selected')).toHaveLength(0)
     expect(wrapper.emitted('move')).toBeUndefined()
+  })
+})
+
+describe('Board with move rules', () => {
+  it('highlights the legal targets of the selected piece', async () => {
+    const wrapper = mount(Board, { props: { board: initialBoard() } })
+    await wrapper.get('[data-square="e2"]').trigger('click')
+    expect(squaresWith(wrapper, 'target')).toEqual(['e3', 'e4'])
+    expect(squaresWith(wrapper, 'capture')).toEqual([])
+  })
+
+  it('marks enemy pieces it can capture and captures them', async () => {
+    const wrapper = mount(Board, { props: { board: boardWith({ e4: 'wP', d5: 'bP' }) } })
+    await wrapper.get('[data-square="e4"]').trigger('click')
+    expect(squaresWith(wrapper, 'capture')).toEqual(['d5'])
+    expect(squaresWith(wrapper, 'target')).toEqual(['e5'])
+    await wrapper.get('[data-square="d5"]').trigger('click')
+    expect(wrapper.emitted('move')).toEqual([['e4', 'd5']])
+  })
+
+  it('ignores an illegal destination and clears the selection', async () => {
+    const wrapper = mount(Board, { props: { board: initialBoard() } })
+    await wrapper.get('[data-square="e2"]').trigger('click')
+    await wrapper.get('[data-square="e5"]').trigger('click')
+    expect(wrapper.emitted('move')).toBeUndefined()
+    expect(wrapper.findAll('.selected, .target')).toHaveLength(0)
+  })
+
+  it('switches the selection to another piece of the same color', async () => {
+    const wrapper = mount(Board, { props: { board: initialBoard() } })
+    await wrapper.get('[data-square="e2"]').trigger('click')
+    await wrapper.get('[data-square="d2"]').trigger('click')
+    expect(wrapper.get('[data-square="d2"]').classes()).toContain('selected')
+    expect(wrapper.emitted('move')).toBeUndefined()
+  })
+
+  it('does not switch to an enemy piece out of reach', async () => {
+    const wrapper = mount(Board, { props: { board: initialBoard() } })
+    await wrapper.get('[data-square="e2"]').trigger('click')
+    await wrapper.get('[data-square="e7"]').trigger('click')
+    expect(wrapper.findAll('.selected')).toHaveLength(0)
   })
 })

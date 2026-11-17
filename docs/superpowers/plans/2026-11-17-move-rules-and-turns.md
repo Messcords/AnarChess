@@ -218,7 +218,7 @@ git commit -m "Add legal move rules for each piece" -m "Refs #16"
     sélectionnée → la sélectionner ;
   - sinon → désélectionner.
 
-- [ ] **Step 1: Write the failing tests** — dans `Board.spec.ts`, importer
+- [x] **Step 1: Write the failing tests** — dans `Board.spec.ts`, importer
 `boardWith` depuis `'../../helpers/board'`, ajouter **en haut du fichier**
 (réutilisé en tâche 3)
 ``const squaresWith = (w: VueWrapper, cls: string) => w.findAll(`.${cls}`).map((e) => e.attributes('data-square')).sort()``
@@ -269,7 +269,7 @@ Dans `index.spec.ts`, le test « captures and then resets » joue
 `e2→e4`, `d7→d5`, `e4→d5` puis vérifie : 31 pièces, `d5` contient `♙` ;
 après « Réinitialiser » : 32 pièces, `d7` contient `♟`, `e2` contient `♙`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm test:run test/components test/pages`
 Expected: FAIL sur les tests qui attendent `target`/`capture`, la prise
@@ -277,21 +277,21 @@ et le refus de e2→e5. Les tests « switches… » et « does not switch… »
 ainsi que le test de page modifié passent déjà (les coups sont encore
 libres) : ils gardent ces comportements verts après l'étape 3.
 
-- [ ] **Step 3: Implement** dans `Board.vue` : `targets` = `computed`
+- [x] **Step 3: Implement** dans `Board.vue` : `targets` = `computed`
 (`legalMoves(props.board, selected)` ou `[]`), classes `target` /
 `capture` dans `cells`, nouvelle logique de `onSquareClick` (voir
 Interfaces ; lire les cibles avant de remettre `selected` à `null`).
 Style : `.target::after` = point centré, `.capture` = cercle
 (`box-shadow: inset 0 0 0 4px …`), dans la palette existante.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm test:run`
 Expected: PASS (tous, y compris les tests existants du plateau et de la page).
 
-- [ ] **Step 5: Doc** — cocher les étapes de la tâche 2 dans ce plan.
+- [x] **Step 5: Doc** — cocher les étapes de la tâche 2 dans ce plan.
 
-- [ ] **Step 6: Verify before commit**
+- [x] **Step 6: Verify before commit**
 
 Run (depuis `screens/`) : `make lint && make check`, puis `make serve` et
 vérifier à la main : e2 montre e3/e4, le cavalier b1 montre a3/c3, une prise

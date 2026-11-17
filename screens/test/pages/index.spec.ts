@@ -18,13 +18,19 @@ describe('home page', () => {
 
   it('captures and then resets to the starting position', async () => {
     const page = await mountSuspended(IndexPage)
-    await page.get('[data-square="d1"]').trigger('click')
-    await page.get('[data-square="d8"]').trigger('click')
+    const play = async (from: string, to: string) => {
+      await page.get(`[data-square="${from}"]`).trigger('click')
+      await page.get(`[data-square="${to}"]`).trigger('click')
+    }
+    await play('e2', 'e4')
+    await play('d7', 'd5')
+    await play('e4', 'd5')
     expect(page.findAll('.piece')).toHaveLength(31)
+    expect(page.get('[data-square="d5"]').text()).toContain('♙')
     await page.get('[data-testid="reset"]').trigger('click')
     expect(page.findAll('.piece')).toHaveLength(32)
-    expect(page.get('[data-square="d8"]').text()).toContain('♛')
-    expect(page.get('[data-square="d1"]').text()).toContain('♕')
+    expect(page.get('[data-square="d7"]').text()).toContain('♟')
+    expect(page.get('[data-square="e2"]').text()).toContain('♙')
   })
 
   it('clears a pending selection on reset', async () => {
