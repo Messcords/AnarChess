@@ -1,15 +1,31 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from api.boards import router
+import mongodb
+from api.boards import router as boards_router
+from routers import items
 from services.boards import BoardError
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await mongodb.connect(app)
+    try:
+        yield
+    finally:
+        await mongodb.close(app)
+
 
 app = FastAPI(
     title="My Backend API",
     version="0.1.0",
+    lifespan=lifespan,
 )
-app.include_router(router)
+app.include_router(boards_router)
+app.include_router(items.router)
 
 
 @app.exception_handler(BoardError)
