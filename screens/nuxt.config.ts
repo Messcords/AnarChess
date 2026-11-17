@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   // Configuration pour ton API Python (accessible via useRuntimeConfig().public.apiBase)
   runtimeConfig: {
     public: {
-      apiBase: 'http://localhost:4010',
+      apiBase: 'http://127.0.0.1:8000',
     },
   },
 

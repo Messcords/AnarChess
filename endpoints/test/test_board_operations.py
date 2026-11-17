@@ -6,6 +6,20 @@ from fastapi.testclient import TestClient
 from main import app
 
 
+def test_board_state_survives_backend_restart(fake_db) -> None:
+    with TestClient(app) as client:
+        created = client.post("/boards").json()
+        board_id = created["boardId"]
+        player_token = created["token"]
+
+    with TestClient(app) as client:
+        response = client.get(f"/boards/{board_id}")
+
+    assert response.status_code == 200
+    assert response.json()["id"] == board_id
+    assert fake_db["boards"].documents[board_id]["tokens"] == [player_token]
+
+
 @pytest.mark.contract("joinBoard", "createBoard")
 def test_join_roles_and_capacity() -> None:
     with TestClient(app) as client:

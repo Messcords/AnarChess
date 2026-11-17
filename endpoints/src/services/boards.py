@@ -1,6 +1,7 @@
-from dataclasses import dataclass
 from secrets import compare_digest, token_urlsafe
-from threading import RLock
+from typing import Any
+
+from pymongo.asynchronous.collection import AsyncCollection
 
 from models.board import (
     Board,
@@ -37,122 +38,155 @@ class BoardError(Exception):
         super().__init__(message)
 
 
-@dataclass
-class StoredBoard:
-    state: BoardState
-    tokens: list[str]
-
-
 class BoardService:
-    def __init__(self) -> None:
-        self._boards: dict[str, StoredBoard] = {}
-        self._lock = RLock()
+    def __init__(self, collection: AsyncCollection[dict[str, Any]]) -> None:
+        self._collection = collection
 
-    def create(self, request: CreateBoardRequest) -> CreatedPlayerAccess:
-        with self._lock:
-            board_id = new_id("brd")
-            player_id = new_id("plr")
-            token = new_id("tok")
-            board = initial_board()
-            state = BoardState(
-                id=board_id,
-                gameState=GameState(
-                    status="waiting",
-                    turn="white",
-                    ruleSet=request.ruleSet,
-                    players=[Player(playerId=player_id, role="white")],
-                ),
-                board=board,
-            )
-            self._boards[board_id] = StoredBoard(state, [token])
-            return CreatedPlayerAccess(
-                boardId=board_id,
-                playerId=player_id,
-                role="white",
-                token=token,
-                board=board,
-            )
+    async def create(self, request: CreateBoardRequest) -> CreatedPlayerAccess:
+        board_id = new_id("brd")
+        player_id = new_id("plr")
+        token = new_id("tok")
+        board = initial_board()
+        state = BoardState(
+            id=board_id,
+            gameState=GameState(
+                status="waiting",
+                turn="white",
+                ruleSet=request.ruleSet,
+                players=[Player(playerId=player_id, role="white")],
+            ),
+            board=board,
+        )
+        await self._collection.insert_one(
+            {"_id": board_id, "state": state.model_dump(), "tokens": [token]}
+        )
+        return CreatedPlayerAccess(
+            boardId=board_id,
+            playerId=player_id,
+            role="white",
+            token=token,
+            board=board,
+        )
 
-    def _get(self, board_id: str) -> StoredBoard:
+    async def _get(self, board_id: str) -> tuple[BoardState, list[str]]:
         if not 1 <= len(board_id) <= 64:
             raise BoardError(400, "invalid_board_id", "Invalid board identifier")
-        board = self._boards.get(board_id)
-        if board is None:
+        document = await self._collection.find_one({"_id": board_id})
+        if document is None:
             raise BoardError(404, "board_not_found", "Board not found")
-        return board
+        return BoardState.model_validate(document["state"]), document["tokens"]
 
     @staticmethod
-    def _authorize(board: StoredBoard, token: str | None) -> None:
+    def _authorize(tokens: list[str], token: str | None) -> None:
         if token is None or not any(
             compare_digest(token.encode("utf-8"), saved.encode("utf-8"))
-            for saved in board.tokens
+            for saved in tokens
         ):
             raise BoardError(403, "invalid_token", "Invalid player token")
 
-    def join(self, board_id: str, preferred_role: PlayerRole | None) -> PlayerAccess:
-        with self._lock:
-            board = self._get(board_id)
-            if board.state.gameState.status == "finished":
+    async def join(self, board_id: str, preferred_role: PlayerRole | None) -> PlayerAccess:
+        state, _ = await self._get(board_id)
+        if state.gameState.status == "finished":
+            raise BoardError(409, "board_finished", "Board is finished")
+
+        available: list[PlayerRole] = [
+            "black"
+        ] if not any(player.role == "black" for player in state.gameState.players) else []
+        if preferred_role is not None:
+            available = [role for role in available if role == preferred_role]
+        if not available:
+            raise BoardError(409, "role_unavailable", "No requested role is available")
+
+        role = available[0]
+        player = Player(playerId=new_id("plr"), role=role)
+        token = new_id("tok")
+        result = await self._collection.update_one(
+            {
+                "_id": board_id,
+                "state.gameState.players": [
+                    existing.model_dump() for existing in state.gameState.players
+                ],
+                "state.gameState.status": {"$ne": "finished"},
+            },
+            {
+                "$push": {
+                    "state.gameState.players": player.model_dump(),
+                    "tokens": token,
+                },
+                "$set": {"state.gameState.status": "in_progress"},
+            },
+        )
+        if result.matched_count == 0:
+            current_state, _ = await self._get(board_id)
+            if current_state.gameState.status == "finished":
                 raise BoardError(409, "board_finished", "Board is finished")
-            roles: list[PlayerRole] = ["black"]
-            occupied = {player.role for player in board.state.gameState.players}
-            available: list[PlayerRole] = [
-                role for role in roles if role not in occupied
-            ]
-            if preferred_role is not None:
-                available = [role for role in available if role == preferred_role]
-            if not available:
-                raise BoardError(
-                    409, "role_unavailable", "No requested role is available"
-                )
-            role = available[0]
-            player = Player(playerId=new_id("plr"), role=role)
-            token = new_id("tok")
-            board.state.gameState.players.append(player)
-            board.tokens.append(token)
-            if role == "black":
-                board.state.gameState.status = "in_progress"
-            return PlayerAccess(
-                boardId=board_id, playerId=player.playerId, role=role, token=token
-            )
+            raise BoardError(409, "role_unavailable", "No requested role is available")
+        return PlayerAccess(
+            boardId=board_id, playerId=player.playerId, role=role, token=token
+        )
 
-    def get(self, board_id: str) -> BoardState:
-        with self._lock:
-            return self._get(board_id).state.model_copy(deep=True)
+    async def get(self, board_id: str) -> BoardState:
+        state, _ = await self._get(board_id)
+        return state
 
-    def update(
+    async def update(
         self, board_id: str, token: str | None, update: BoardStateUpdate
     ) -> BoardState:
-        with self._lock:
-            board = self._get(board_id)
-            self._authorize(board, token)
-            if board.state.gameState.status == "finished":
-                raise BoardError(409, "board_finished", "Board is finished")
-            state = board.state.gameState
-            state.status = update.gameState.status
-            state.turn = update.gameState.turn
-            if update.gameState.ruleSet is not None:
-                state.ruleSet = update.gameState.ruleSet
-            if "outcome" in update.gameState.model_fields_set:
-                state.outcome = update.gameState.outcome
-            board.state.board = update.board
-            return board.state.model_copy(deep=True)
+        state, tokens = await self._get(board_id)
+        self._authorize(tokens, token)
+        if state.gameState.status == "finished":
+            raise BoardError(409, "board_finished", "Board is finished")
+        previous_state = state.model_copy(deep=True)
+        state.gameState.status = update.gameState.status
+        state.gameState.turn = update.gameState.turn
+        if update.gameState.ruleSet is not None:
+            state.gameState.ruleSet = update.gameState.ruleSet
+        if "outcome" in update.gameState.model_fields_set:
+            state.gameState.outcome = update.gameState.outcome
+        state.board = update.board
+        await self._save(board_id, previous_state, state, token, reject_finished=True)
+        return state
 
-    def reset(
+    async def reset(
         self, board_id: str, token: str | None, rule_set: str | None
     ) -> BoardState:
-        with self._lock:
-            board = self._get(board_id)
-            self._authorize(board, token)
-            state = board.state.gameState
-            state.status = (
-                "in_progress"
-                if any(p.role == "black" for p in state.players)
-                else "waiting"
+        state, tokens = await self._get(board_id)
+        self._authorize(tokens, token)
+        previous_state = state.model_copy(deep=True)
+        state.gameState.status = (
+            "in_progress"
+            if any(player.role == "black" for player in state.gameState.players)
+            else "waiting"
+        )
+        state.gameState.turn = "white"
+        state.gameState.outcome = None
+        if rule_set is not None:
+            state.gameState.ruleSet = rule_set
+        state.board = initial_board()
+        await self._save(board_id, previous_state, state, token)
+        return state
+
+    async def _save(
+        self,
+        board_id: str,
+        previous_state: BoardState,
+        state: BoardState,
+        token: str | None,
+        reject_finished: bool = False,
+    ) -> None:
+        result = await self._collection.update_one(
+            {
+                "_id": board_id,
+                "state": previous_state.model_dump(),
+                "tokens": token,
+            },
+            {"$set": {"state": state.model_dump()}},
+        )
+        if result.matched_count == 0:
+            current_state, tokens = await self._get(board_id)
+            self._authorize(tokens, token)
+            if reject_finished and current_state.gameState.status == "finished":
+                raise BoardError(409, "board_finished", "Board is finished")
+            raise BoardError(
+                409, "board_changed", "Board state changed; refresh and retry"
             )
-            state.turn = "white"
-            state.outcome = None
-            if rule_set is not None:
-                state.ruleSet = rule_set
-            board.state.board = initial_board()
-            return board.state.model_copy(deep=True)

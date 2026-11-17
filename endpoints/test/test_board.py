@@ -38,6 +38,21 @@ def test_create_board_rejects_invalid_parameters() -> None:
     assert response.json() == {"detail": "Invalid request parameters"}
 
 
+def test_cors_allows_the_local_frontend() -> None:
+    with TestClient(app) as client:
+        response = client.options(
+            "/boards",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type,x-player-token",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+
 @pytest.mark.contract("getBoardState")
 def test_get_board_state() -> None:
     with TestClient(app) as client:

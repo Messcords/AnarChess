@@ -1,5 +1,8 @@
 import re
+from copy import deepcopy
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
@@ -8,19 +11,91 @@ import mongodb
 OPENAPI_PATH = Path(__file__).resolve().parents[2] / "docs" / "openapi.yaml"
 
 
+def _value_at(document: dict[str, Any], path: str) -> Any:
+    value: Any = document
+    for part in path.split("."):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(part)
+    return value
+
+
+def _set_value(document: dict[str, Any], path: str, value: Any) -> None:
+    parts = path.split(".")
+    target = document
+    for part in parts[:-1]:
+        target = target.setdefault(part, {})
+    target[parts[-1]] = value
+
+
+class FakeCollection:
+    def __init__(self) -> None:
+        self.documents: dict[str, dict[str, Any]] = {}
+
+    async def insert_one(self, document: dict[str, Any]) -> None:
+        self.documents[document["_id"]] = deepcopy(document)
+
+    async def find_one(self, query: dict[str, Any]) -> dict[str, Any] | None:
+        document = self.documents.get(query["_id"])
+        if document is None:
+            return None
+        if self._matches(document, query):
+            return deepcopy(document)
+        return None
+
+    async def update_one(
+        self, query: dict[str, Any], update: dict[str, dict[str, Any]]
+    ) -> SimpleNamespace:
+        document = self.documents.get(query["_id"])
+        if document is None or not self._matches(document, query):
+            return SimpleNamespace(matched_count=0)
+        for path, value in update.get("$set", {}).items():
+            _set_value(document, path, deepcopy(value))
+        for path, value in update.get("$push", {}).items():
+            _value_at(document, path).append(deepcopy(value))
+        return SimpleNamespace(matched_count=1)
+
+    @staticmethod
+    def _matches(document: dict[str, Any], query: dict[str, Any]) -> bool:
+        for path, expected in query.items():
+            actual = _value_at(document, path)
+            if isinstance(expected, dict) and "$ne" in expected:
+                if actual == expected["$ne"]:
+                    return False
+            elif isinstance(actual, list) and not isinstance(expected, list):
+                if expected not in actual:
+                    return False
+            elif actual != expected:
+                return False
+        return True
+
+
+class FakeDatabase:
+    def __init__(self) -> None:
+        self.collections = {"boards": FakeCollection()}
+
+    def __getitem__(self, name: str) -> FakeCollection:
+        return self.collections[name]
+
+
 @pytest.fixture(autouse=True)
-def no_mongo(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Tests never open a MongoDB connection (no routes use the database yet)."""
+def no_mongo(monkeypatch: pytest.MonkeyPatch, fake_db: FakeDatabase) -> None:
+    """Tests use an in-memory collection instead of opening a MongoDB connection."""
 
     async def fake_connect(app) -> None:
         app.state.mongo_client = None
-        app.state.db = None
+        app.state.db = fake_db
 
     async def fake_close(app) -> None:
         pass
 
     monkeypatch.setattr(mongodb, "connect", fake_connect)
     monkeypatch.setattr(mongodb, "close", fake_close)
+
+
+@pytest.fixture
+def fake_db() -> FakeDatabase:
+    return FakeDatabase()
 
 
 # nodeid -> operationIds covered, filled at collection time
