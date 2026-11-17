@@ -19,7 +19,7 @@ describe('API contract error', () => {
       ),
     )
 
-    await expect(joinBoard('brd_unknown')).rejects.toMatchObject({
+    await expect(joinBoard('http://localhost:8000', 'brd_unknown')).rejects.toMatchObject({
       name: 'ApiError',
       status: 404,
       code: 'board_not_found',
