@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { initialBoard, cellAt, movePiece, pieceGlyph, type BoardMatrix } from '~/utils/pieces'
+import { initialBoard, cellAt, movePiece, pieceColor, pieceGlyph, type BoardMatrix } from '~/utils/pieces'
 
 const pieceCount = (board: BoardMatrix) => board.flat().filter((cell) => cell !== '').length
 
@@ -71,5 +71,12 @@ describe('pieceGlyph', () => {
   it('uses Unicode symbols forced to text presentation', () => {
     expect(pieceGlyph('wK')).toBe('♔︎')
     expect(pieceGlyph('bP')).toBe('♟︎')
+  })
+})
+
+describe('pieceColor', () => {
+  it('reads the color from the code', () => {
+    expect(pieceColor('wK')).toBe('white')
+    expect(pieceColor('bP')).toBe('black')
   })
 })
