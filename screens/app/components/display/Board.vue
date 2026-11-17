@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { FILES, RANKS, boardSquares, isLightSquare, type Square } from '~/utils/chess'
-import { cellAt, pieceGlyph, type BoardMatrix } from '~/utils/pieces'
+import { cellAt, pieceColor, pieceGlyph, type BoardMatrix } from '~/utils/pieces'
+import { legalMoves } from '~/utils/rules'
 
 /** `board` follows the API contract: 8×8 matrix of piece codes ('' = empty). */
 const props = withDefaults(defineProps<{ board?: BoardMatrix }>(), { board: () => [] })
@@ -15,22 +16,50 @@ watch(
     selected.value = null
   },
 )
+// Squares where the selected piece is allowed to go.
+const targets = computed(() => {
+  if (selected.value === null) {
+    return []
+  }
+  return legalMoves(props.board, selected.value)
+})
+
 const cells = computed(() =>
   boardSquares().map((square) => ({
     square,
     light: isLightSquare(square),
     code: cellAt(props.board, square),
+    target: targets.value.includes(square),
   })),
 )
 
-/** Two-click move: pick a piece, then its destination. The parent applies the move. */
+// A piece can be picked when nothing is selected yet,
+// or when it has the same color as the selected piece.
+function canSelect(square: Square, from: Square | null): boolean {
+  const piece = cellAt(props.board, square)
+  if (piece === '' || square === from) {
+    return false
+  }
+  if (from === null) {
+    return true
+  }
+  const selectedPiece = cellAt(props.board, from)
+  return selectedPiece !== '' && pieceColor(piece) === pieceColor(selectedPiece)
+}
+
+/**
+ * Two-click move. The first click picks a piece. The second click plays
+ * the move if the square is a legal target, picks another piece of the
+ * same color, or cancels the selection. The parent applies the move.
+ */
 function onSquareClick(square: Square) {
-  if (selected.value === null) {
-    if (cellAt(props.board, square) !== '') selected.value = square
+  const from = selected.value
+  if (from !== null && targets.value.includes(square)) {
+    emit('move', from, square)
+    selected.value = null
     return
   }
-  if (selected.value !== square) emit('move', selected.value, square)
-  selected.value = null
+  selected.value = canSelect(square, from) ? square : null
 }
 </script>
 
@@ -42,11 +71,18 @@ function onSquareClick(square: Square) {
 
     <div class="grid">
       <button
-        v-for="{ square, light, code } in cells"
+        v-for="{ square, light, code, target } in cells"
         :key="square"
         type="button"
         class="square"
-        :class="[light ? 'light' : 'dark', { selected: selected === square }]"
+        :class="[
+          light ? 'light' : 'dark',
+          {
+            selected: selected === square,
+            target: target && code === '',
+            capture: target && code !== '',
+          },
+        ]"
         :data-square="square"
         :aria-label="square"
         :aria-pressed="selected === square"
@@ -120,6 +156,20 @@ function onSquareClick(square: Square) {
 
 .selected {
   box-shadow: inset 0 0 0 4px #f6c90e;
+}
+
+/* Empty square the selected piece can go to: a dot in the middle. */
+.target::after {
+  content: '';
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 25%);
+}
+
+/* Enemy piece the selected piece can capture: a ring around the square. */
+.capture {
+  box-shadow: inset 0 0 0 4px rgb(0 0 0 / 35%);
 }
 
 .light {
