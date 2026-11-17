@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import Board from '@/components/display/Board.vue'
 import { initialBoard } from '~/utils/pieces'
+import type { Move } from '~/utils/rules'
 import { boardWith } from '../../helpers/board'
 
 /** The squares (e.g. ['e3', 'e4']) that have the given CSS class, sorted. */
@@ -119,5 +120,22 @@ describe('Board with move rules', () => {
     await wrapper.get('[data-square="e2"]').trigger('click')
     await wrapper.get('[data-square="e7"]').trigger('click')
     expect(wrapper.findAll('.selected')).toHaveLength(0)
+  })
+})
+
+describe('Board castling', () => {
+  it('offers castling only while the rook has not moved', async () => {
+    const board = boardWith({ e1: 'wK', h1: 'wR' })
+    const fresh = mount(Board, { props: { board } })
+    await fresh.get('[data-square="e1"]').trigger('click')
+    expect(squaresWith(fresh, 'target')).toContain('g1')
+
+    const history: Move[] = [
+      { from: 'h1', to: 'h2' },
+      { from: 'h2', to: 'h1' },
+    ]
+    const moved = mount(Board, { props: { board, history } })
+    await moved.get('[data-square="e1"]').trigger('click')
+    expect(squaresWith(moved, 'target')).not.toContain('g1')
   })
 })
