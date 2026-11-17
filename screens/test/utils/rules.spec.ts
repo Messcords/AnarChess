@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { Square } from '~/utils/chess'
 import { cellAt, initialBoard, movePiece, type BoardMatrix } from '~/utils/pieces'
-import { legalMoves, playMove, type Move } from '~/utils/rules'
+import { isPromotion, legalMoves, playMove, promotedPiece, type Move } from '~/utils/rules'
 import { boardWith } from '../helpers/board'
 
 const moves = (board: BoardMatrix, from: Square, history: Move[] = []) =>
@@ -164,5 +164,27 @@ describe('playMove', () => {
     const played = playMove(initialBoard(), 'e2', 'e4')
     const moved = movePiece(initialBoard(), 'e2', 'e4')
     expect(played).toEqual(moved)
+  })
+})
+
+describe('promotion choice', () => {
+  it('knows when a pawn reaches the last rank', () => {
+    expect(isPromotion(boardWith({ e7: 'wP' }), 'e7', 'e8')).toBe(true)
+    expect(isPromotion(boardWith({ d2: 'bP' }), 'd2', 'd1')).toBe(true)
+    expect(isPromotion(initialBoard(), 'e2', 'e4')).toBe(false)
+    expect(isPromotion(boardWith({ e7: 'wQ' }), 'e7', 'e8')).toBe(false)
+  })
+
+  it('gives the promoted piece the color of the pawn', () => {
+    expect(promotedPiece('wP', 'N')).toBe('wN')
+    expect(promotedPiece('bP', 'R')).toBe('bR')
+  })
+
+  it('turns the pawn into the chosen piece', () => {
+    const knight = playMove(boardWith({ e7: 'wP' }), 'e7', 'e8', 'N')
+    const rook = playMove(boardWith({ d2: 'bP' }), 'd2', 'd1', 'R')
+
+    expect(cellAt(knight, 'e8')).toBe('wN')
+    expect(cellAt(rook, 'd1')).toBe('bR')
   })
 })

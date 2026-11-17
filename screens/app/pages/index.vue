@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import type { Square } from '~/utils/chess'
 import { initialBoard, type BoardMatrix } from '~/utils/pieces'
-import { playMove, type Move } from '~/utils/rules'
+import { playMove, type Move, type PromotionPiece } from '~/utils/rules'
 
 const board = ref<BoardMatrix>(initialBoard())
 const history = ref<Move[]>([])
 
-function onMove(from: Square, to: Square) {
-  board.value = playMove(board.value, from, to)
+function onMove(from: Square, to: Square, promotion?: PromotionPiece) {
+  board.value = playMove(board.value, from, to, promotion)
 
   const move: Move = { from, to }
   history.value = [...history.value, move]
