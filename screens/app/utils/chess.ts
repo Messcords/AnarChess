@@ -18,3 +18,23 @@ export function isLightSquare(square: Square): boolean {
   const rank = Number(square[1])
   return (fileIndex + rank) % 2 === 0
 }
+
+/** Row 0 is rank 8 and column 0 is file a, like the board matrix of the API. */
+export function squareToCoords(square: Square): [number, number] {
+  const row = RANKS.indexOf(square[1] as BoardRank)
+  const col = FILES.indexOf(square[0] as BoardFile)
+  return [row, col]
+}
+
+/** Returns undefined when the row or the column is outside the board. */
+export function coordsToSquare(row: number, col: number): Square | undefined {
+  const rowIsOnBoard = row >= 0 && row <= 7
+  const colIsOnBoard = col >= 0 && col <= 7
+  if (!rowIsOnBoard || !colIsOnBoard) {
+    return undefined
+  }
+
+  const file = FILES[col]
+  const rank = RANKS[row]
+  return `${file}${rank}` as Square
+}
