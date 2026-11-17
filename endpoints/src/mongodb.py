@@ -11,8 +11,9 @@ MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "mydatabase")
 
 
 async def connect(app):
-    app.state.mongo_client = AsyncMongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    app.state.mongo_client = AsyncMongoClient(MONGO_URI)
     app.state.db = app.state.mongo_client[MONGO_DB_NAME]
+    await app.state.mongo_client.admin.command("ping")
 
 
 async def close(app):
