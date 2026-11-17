@@ -27,12 +27,14 @@ dev = [
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.5",
+    "schemathesis>=4.33.4",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
-addopts = "-v"
+addopts = "-v -m 'not fuzz'"
 python_files = ["test-*.py", "test_*.py", "*_test.py"]
 markers = [
     "contract(*operation_ids): operationId(s) from docs/openapi.yaml covered by the test",
+    "fuzz: Schemathesis tests generated from docs/openapi.yaml (run with make contract)",
 ]

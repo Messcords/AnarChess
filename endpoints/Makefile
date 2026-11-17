@@ -12,6 +12,7 @@ help:
 		'  install Install project dependencies' \
 		'  serve  Start the API with automatic reload' \
 		'  check  Run lint and tests' \
+		'  contract Run Schemathesis tests against docs/openapi.yaml' \
 		'  lint   Check code with Ruff' \
 		'  fix    Apply Ruff fixes and formatting' \
 		'  audit  Check dependencies for security vulnerabilities'
@@ -24,6 +25,9 @@ serve:
 
 check:
 	$(UV) run --no-sync pytest
+
+contract:
+	$(UV) run --no-sync pytest -m fuzz test/test_schemathesis.py
 
 lint:
 	$(UV) run --no-sync ruff check .
