@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import type { Square } from '~/utils/chess'
-import { initialBoard, type BoardMatrix } from '~/utils/pieces'
-import { legalMoves } from '~/utils/rules'
+import { cellAt, initialBoard, movePiece, type BoardMatrix } from '~/utils/pieces'
+import { legalMoves, playMove, type Move } from '~/utils/rules'
 import { boardWith } from '../helpers/board'
 
-const moves = (board: BoardMatrix, from: Square) => legalMoves(board, from).sort()
+const moves = (board: BoardMatrix, from: Square, history: Move[] = []) =>
+  legalMoves(board, from, history).sort()
 
 describe('legalMoves at the starting position', () => {
   it('lets the e2 pawn advance one or two squares', () => {
@@ -84,5 +85,78 @@ describe('king and knight', () => {
 
   it('knight from a corner', () => {
     expect(moves(boardWith({ h8: 'bN' }), 'h8')).toEqual(['f7', 'g6'])
+  })
+})
+
+describe('castling', () => {
+  it('lets the king castle on both sides when the way is free', () => {
+    const board = boardWith({ e1: 'wK', a1: 'wR', h1: 'wR' })
+    expect(moves(board, 'e1')).toEqual(['c1', 'd1', 'd2', 'e2', 'f1', 'f2', 'g1'])
+  })
+
+  it('works for black too', () => {
+    const board = boardWith({ e8: 'bK', h8: 'bR' })
+    expect(moves(board, 'e8')).toContain('g8')
+  })
+
+  it('needs every square between the king and the rook to be empty', () => {
+    const knightOnG1 = boardWith({ e1: 'wK', h1: 'wR', g1: 'wN' })
+    const knightOnB1 = boardWith({ e1: 'wK', a1: 'wR', b1: 'wN' })
+    expect(moves(knightOnG1, 'e1')).not.toContain('g1')
+    expect(moves(knightOnB1, 'e1')).not.toContain('c1')
+  })
+
+  it('is not allowed once the king or the rook has moved', () => {
+    const board = boardWith({ e1: 'wK', a1: 'wR', h1: 'wR' })
+    const kingMoved: Move[] = [
+      { from: 'e1', to: 'e2' },
+      { from: 'e2', to: 'e1' },
+    ]
+    const rookMoved: Move[] = [
+      { from: 'h1', to: 'h2' },
+      { from: 'h2', to: 'h1' },
+    ]
+
+    expect(moves(board, 'e1', kingMoved)).not.toContain('g1')
+    expect(moves(board, 'e1', kingMoved)).not.toContain('c1')
+    expect(moves(board, 'e1', rookMoved)).not.toContain('g1')
+    expect(moves(board, 'e1', rookMoved)).toContain('c1')
+  })
+
+  it('is not allowed without an own rook in the corner', () => {
+    const noRook = boardWith({ e1: 'wK' })
+    const enemyRook = boardWith({ e1: 'wK', h1: 'bR' })
+    expect(moves(noRook, 'e1')).not.toContain('g1')
+    expect(moves(enemyRook, 'e1')).not.toContain('g1')
+  })
+})
+
+describe('playMove', () => {
+  it('moves the rook too when the king castles', () => {
+    const kingSide = playMove(boardWith({ e1: 'wK', h1: 'wR' }), 'e1', 'g1')
+    expect(cellAt(kingSide, 'g1')).toBe('wK')
+    expect(cellAt(kingSide, 'f1')).toBe('wR')
+    expect(cellAt(kingSide, 'h1')).toBe('')
+
+    const queenSide = playMove(boardWith({ e8: 'bK', a8: 'bR' }), 'e8', 'c8')
+    expect(cellAt(queenSide, 'c8')).toBe('bK')
+    expect(cellAt(queenSide, 'd8')).toBe('bR')
+    expect(cellAt(queenSide, 'a8')).toBe('')
+  })
+
+  it('turns a pawn reaching the last rank into a queen', () => {
+    const whitePawn = playMove(boardWith({ e7: 'wP' }), 'e7', 'e8')
+    const blackPawn = playMove(boardWith({ d2: 'bP' }), 'd2', 'd1')
+    const pawnCapturing = playMove(boardWith({ e7: 'wP', d8: 'bR' }), 'e7', 'd8')
+
+    expect(cellAt(whitePawn, 'e8')).toBe('wQ')
+    expect(cellAt(blackPawn, 'd1')).toBe('bQ')
+    expect(cellAt(pawnCapturing, 'd8')).toBe('wQ')
+  })
+
+  it('plays any other move like movePiece', () => {
+    const played = playMove(initialBoard(), 'e2', 'e4')
+    const moved = movePiece(initialBoard(), 'e2', 'e4')
+    expect(played).toEqual(moved)
   })
 })

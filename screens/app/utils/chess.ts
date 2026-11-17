@@ -28,8 +28,13 @@ export function squareToCoords(square: Square): [number, number] {
 
 /** Returns undefined when the row or the column is outside the board. */
 export function coordsToSquare(row: number, col: number): Square | undefined {
-  if (row < 0 || row > 7 || col < 0 || col > 7) {
+  const rowIsOnBoard = row >= 0 && row <= 7
+  const colIsOnBoard = col >= 0 && col <= 7
+  if (!rowIsOnBoard || !colIsOnBoard) {
     return undefined
   }
-  return `${FILES[col]}${RANKS[row]}` as Square
+
+  const file = FILES[col]
+  const rank = RANKS[row]
+  return `${file}${rank}` as Square
 }

@@ -33,6 +33,24 @@ describe('home page', () => {
     expect(page.get('[data-square="e2"]').text()).toContain('♙')
   })
 
+  it('castles the king with the rook', async () => {
+    const page = await mountSuspended(IndexPage)
+    const play = async (from: string, to: string) => {
+      await page.get(`[data-square="${from}"]`).trigger('click')
+      await page.get(`[data-square="${to}"]`).trigger('click')
+    }
+    await play('e2', 'e4')
+    await play('e7', 'e5')
+    await play('g1', 'f3')
+    await play('b8', 'c6')
+    await play('f1', 'c4')
+    await play('g8', 'f6')
+    await play('e1', 'g1')
+    expect(page.get('[data-square="g1"]').text()).toContain('♔')
+    expect(page.get('[data-square="f1"]').text()).toContain('♖')
+    expect(page.find('[data-square="h1"] .piece').exists()).toBe(false)
+  })
+
   it('clears a pending selection on reset', async () => {
     const page = await mountSuspended(IndexPage)
     await page.get('[data-square="e2"]').trigger('click')

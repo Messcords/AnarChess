@@ -22,10 +22,12 @@ tour blancs/noirs » — https://github.com/Messcords/AnarChess/issues/16
 ## Global Constraints
 
 - Tout se passe dans le front (`screens/`), aucun appel API.
-- Hors périmètre (issue #16) : échec / mat / pat, roque, prise en passant,
-  promotion, fin de partie, envoi au back, glisser-déposer, animations.
+- Hors périmètre (issue #16) : échec / mat / pat, prise en passant, fin de
+  partie, envoi au back, glisser-déposer, animations. **Ajout demandé par
+  l'utilisateur après la tâche 2** : roque et promotion automatique en dame
+  (tâche 2b).
 - Deux sous-objectifs, **une branche chacun**, partant de `develop` :
-  1. `feat/16-piece-move-rules` — tâches 1 à 2 (règles de déplacement) ;
+  1. `feat/16-piece-move-rules` — tâches 1, 2 et 2b (règles de déplacement) ;
   2. `feat/16-turn-order` — tâches 3 à 4 (tour par tour), créée depuis
      `develop` **après** le merge de la branche 1.
 - Fin de branche : l'utilisateur pousse, ouvre la PR vers `develop` et la
@@ -190,7 +192,7 @@ Expected: PASS.
 Run (depuis `screens/`) : `make lint && make check`
 Expected : eslint n'affiche rien ; tous les tests PASS, aucun warning.
 
-- [ ] **Step 7: STOP — commit par l'utilisateur**
+- [x] **Step 7: STOP — commit par l'utilisateur**
 
 ```bash
 git add screens/app/utils/chess.ts screens/app/utils/pieces.ts screens/app/utils/rules.ts \
@@ -298,7 +300,7 @@ vérifier à la main : e2 montre e3/e4, le cavalier b1 montre a3/c3, une prise
 affiche un cercle.
 Expected : eslint muet, tests PASS sans warning, comportement conforme.
 
-- [ ] **Step 7: STOP — commit par l'utilisateur**, puis fin de branche
+- [x] **Step 7: STOP — commit par l'utilisateur**, puis fin de branche
 (push + PR vers `develop` + merge par l'utilisateur ; attendre).
 
 ```bash
@@ -306,6 +308,54 @@ git add screens/app/components/display/Board.vue screens/test/components/display
   screens/test/pages/index.spec.ts docs/superpowers/plans/2026-11-17-move-rules-and-turns.md
 git commit -m "Restrict board moves to legal targets" -m "Refs #16"
 ```
+
+### Task 2b: Roque et promotion en dame
+
+Ajouté à la demande de l'utilisateur (« roque + quand un petit pion arrive
+de l'autre côté il se transforme en reine, avec du code simple »).
+
+**Files:**
+- Modify: `screens/app/utils/rules.ts` (type `Move`, roque dans `legalMoves`, `playMove`)
+- Modify: `screens/app/components/display/Board.vue` (prop `history`)
+- Modify: `screens/app/pages/index.vue` (historique des coups, `playMove`)
+- Test: `screens/test/utils/rules.spec.ts`, `screens/test/components/display/Board.spec.ts`, `screens/test/pages/index.spec.ts`
+- Doc: ce plan (cases cochées)
+
+**Interfaces:**
+- Produces (`~/utils/rules`) :
+  - `export type Move = { from: Square; to: Square }`
+  - `legalMoves(board: BoardMatrix, from: Square, history: Move[] = []): Square[]`
+    — ajoute g1/c1 (g8/c8) au roi quand le roque est permis.
+  - `export function playMove(board: BoardMatrix, from: Square, to: Square): BoardMatrix`
+    — `movePiece`, plus : roi qui se déplace de deux colonnes → la tour
+    passe de l'autre côté (h→f ou a→d) ; pion qui arrive sur la dernière
+    rangée → dame de sa couleur.
+- `Board.vue` : prop `history?: Move[]` (défaut `[]`), transmise à `legalMoves`.
+- Page : `const history = ref<Move[]>([])`, chaque coup y est ajouté,
+  « Réinitialiser » le vide ; les coups sont joués avec `playMove`.
+- Règles du roque (simples) : le roi est sur e1 (e8), la tour de sa couleur
+  dans le coin, aucun des deux n'apparaît dans `history` (ni en `from` ni en
+  `to`), toutes les cases entre eux sont vides. Pas de vérification
+  d'échec (l'échec n'existe pas dans le jeu).
+
+- [x] **Step 1: Write the failing tests** — `rules.spec.ts` :
+  roque des deux côtés (`{e1:'wK', a1:'wR', h1:'wR'}` → `['c1','d1','d2','e2','f1','f2','g1']`),
+  roque noir (`{e8:'bK', h8:'bR'}` → contient `g8`), bloqué par une pièce
+  (`g1` occupé → pas `g1` ; `b1` occupé → pas `c1`), refusé si le roi ou la
+  tour a déjà bougé (via `history`), refusé sans tour ou avec une tour
+  adverse ; `playMove` : petit et grand roque déplacent la tour, promotion
+  blanche, noire et avec prise, coup normal identique à `movePiece`.
+  `Board.spec.ts` : g1 proposé au roi seulement tant que la tour n'a pas
+  bougé. `index.spec.ts` : e4 e5 Cf3 Cc6 Fc4 Cf6 puis e1→g1 → roi en g1,
+  tour en f1.
+- [x] **Step 2: Run the tests to verify they fail** — `pnpm test:run`.
+- [x] **Step 3: Implement** `castlingMoves` (privée, commentée),
+  `playMove`, la prop `history` et l'historique de la page.
+- [x] **Step 4: Run the tests to verify they pass** — `pnpm test:run`.
+- [x] **Step 5: Doc** — cocher les étapes de la tâche 2b dans ce plan.
+- [x] **Step 6: Verify before commit** — `make lint && make check`, puis
+  essai dans le navigateur (roque et promotion).
+- [x] **Step 7: Commit (un seul)** — `Add castling and queen promotion`, `Refs #16`.
 
 ---
 

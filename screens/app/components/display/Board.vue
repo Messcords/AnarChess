@@ -1,11 +1,23 @@
 <script setup lang="ts">
 import { FILES, RANKS, boardSquares, isLightSquare, type Square } from '~/utils/chess'
 import { cellAt, pieceColor, pieceGlyph, type BoardMatrix } from '~/utils/pieces'
-import { legalMoves } from '~/utils/rules'
+import { legalMoves, type Move } from '~/utils/rules'
 
-/** `board` follows the API contract: 8×8 matrix of piece codes ('' = empty). */
-const props = withDefaults(defineProps<{ board?: BoardMatrix }>(), { board: () => [] })
-const emit = defineEmits<{ move: [from: Square, to: Square] }>()
+type Props = {
+  // The API contract board: 8×8 matrix of piece codes ('' = empty square).
+  board?: BoardMatrix
+  // Moves already played, needed to know if castling is still allowed.
+  history?: Move[]
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  board: () => [],
+  history: () => [],
+})
+
+const emit = defineEmits<{
+  move: [from: Square, to: Square]
+}>()
 
 const selected = ref<Square | null>(null)
 
@@ -16,12 +28,12 @@ watch(
     selected.value = null
   },
 )
-// Squares where the selected piece is allowed to go.
+
 const targets = computed(() => {
   if (selected.value === null) {
     return []
   }
-  return legalMoves(props.board, selected.value)
+  return legalMoves(props.board, selected.value, props.history)
 })
 
 const cells = computed(() =>
@@ -33,8 +45,6 @@ const cells = computed(() =>
   })),
 )
 
-// A piece can be picked when nothing is selected yet,
-// or when it has the same color as the selected piece.
 function canSelect(square: Square, from: Square | null): boolean {
   const piece = cellAt(props.board, square)
   if (piece === '' || square === from) {
@@ -43,8 +53,12 @@ function canSelect(square: Square, from: Square | null): boolean {
   if (from === null) {
     return true
   }
+
   const selectedPiece = cellAt(props.board, from)
-  return selectedPiece !== '' && pieceColor(piece) === pieceColor(selectedPiece)
+  if (selectedPiece === '') {
+    return false
+  }
+  return pieceColor(piece) === pieceColor(selectedPiece)
 }
 
 /**
@@ -54,12 +68,19 @@ function canSelect(square: Square, from: Square | null): boolean {
  */
 function onSquareClick(square: Square) {
   const from = selected.value
-  if (from !== null && targets.value.includes(square)) {
+  const isLegalTarget = targets.value.includes(square)
+
+  if (from !== null && isLegalTarget) {
     emit('move', from, square)
     selected.value = null
     return
   }
-  selected.value = canSelect(square, from) ? square : null
+
+  if (canSelect(square, from)) {
+    selected.value = square
+  } else {
+    selected.value = null
+  }
 }
 </script>
 
