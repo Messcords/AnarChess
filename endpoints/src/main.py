@@ -6,7 +6,6 @@ from fastapi.responses import JSONResponse
 
 import mongodb
 from api.boards import router as boards_router
-from routers import items
 from services.boards import BoardError
 
 
