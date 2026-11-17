@@ -123,6 +123,12 @@ describe('castling', () => {
     expect(moves(board, 'e1', rookMoved)).toContain('c1')
   })
 
+  it('is not allowed once another piece has landed on the rook corner', () => {
+    const board = boardWith({ e1: 'wK', h1: 'wR' })
+    const rookReplaced: Move[] = [{ from: 'h5', to: 'h1' }]
+    expect(moves(board, 'e1', rookReplaced)).not.toContain('g1')
+  })
+
   it('is not allowed without an own rook in the corner', () => {
     const noRook = boardWith({ e1: 'wK' })
     const enemyRook = boardWith({ e1: 'wK', h1: 'bR' })
