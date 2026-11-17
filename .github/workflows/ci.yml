@@ -38,6 +38,9 @@ jobs:
       - run: make check
         working-directory: screens
 
+      - run: make audit
+        working-directory: screens
+
   backend:
     name: Backend
     runs-on: ubuntu-latest
@@ -60,4 +63,7 @@ jobs:
         working-directory: endpoints
 
       - run: make check
+        working-directory: endpoints
+
+      - run: make audit
         working-directory: endpoints

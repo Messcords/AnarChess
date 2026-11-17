@@ -1,7 +1,7 @@
 PNPM ?= pnpm
 .DEFAULT_GOAL := help
 
-.PHONY: help install serve build preview check lint fix
+.PHONY: help install serve build preview check lint fix audit
 
 help:
 	@printf '%s\n' \
@@ -15,7 +15,8 @@ help:
 		'  preview Preview the production build' \
 		'  check   Run lint and tests' \
 		'  lint    Check code with ESLint' \
-		'  fix     Apply ESLint fixes'
+		'  fix     Apply ESLint fixes' \
+		'  audit   Check dependencies for security vulnerabilities'
 
 install:
 	$(PNPM) install
@@ -37,3 +38,6 @@ lint:
 
 fix:
 	$(PNPM) exec eslint --fix .
+
+audit:
+	$(PNPM) audit
