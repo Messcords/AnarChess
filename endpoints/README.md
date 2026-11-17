@@ -36,6 +36,7 @@ Toujours depuis `endpoints` :
 | `make lint` | Vérifie le code avec Ruff |
 | `make check` | Lance les tests (pytest) |
 | `make contract` | Lance les tests de contrat Schemathesis |
+| `make load` / `load-race` / `load-create` / `load-ui` | Lance les tests de charge Locust (API démarrée), rapport dans `docs/charge/` |
 | `make audit` | Cherche les failles connues dans les dépendances (pip-audit) |
 
 ### Tests de contrat (Schemathesis)
@@ -56,6 +57,30 @@ des réponses, absence d'erreur serveur.
 - En cas d'échec, Schemathesis affiche une commande `curl` pour reproduire la
   requête fautive.
 - Le code des tests est dans `test/test_schemathesis.py`.
+
+### Tests de charge (Locust)
+
+Les scénarios sont dans `load/locustfile.py`. L'API doit tourner
+(`make serve` dans un autre terminal), puis :
+
+| Commande | Scénario | Attendu |
+|----------|----------|---------|
+| `make load` | Parties complètes : le blanc crée, le noir rejoint, puis ils consultent l'état, jouent et réinitialisent (20 utilisateurs, 30 s) | 0 échec, p95 < 200 ms |
+| `make load-race` | Une seule place libre (le noir d'une partie), demandée par 50 utilisateurs en même temps | 1 place accordée (200), 49 refus (409) |
+| `make load-create` | 50 utilisateurs créent une partie en même temps | 50 parties, aucun `boardId` en double |
+| `make load-ui` | Interface web sur <http://localhost:8089> | |
+
+Les paramètres se changent en ligne de commande :
+
+```bash
+make load USERS=100 SPAWN_RATE=10 DURATION=1m HOST=http://127.0.0.1:8000
+make load-race RACE_USERS=200
+```
+
+Chaque exécution (sauf `load-ui`) écrit un rapport dans
+[docs/charge/](../docs/charge), nommé `<date>-<scénario>-<commit>.md`. Il contient
+la date, le commit, la machine, les paramètres, les résultats (p95, échecs,
+débit), le verdict du scénario et une section « Ce qu'on corrige » à compléter.
 
 Pour afficher les autres commandes disponibles :
 
