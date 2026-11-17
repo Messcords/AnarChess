@@ -3,7 +3,25 @@ from pathlib import Path
 
 import pytest
 
+import mongodb
+
 OPENAPI_PATH = Path(__file__).resolve().parents[2] / "docs" / "openapi.yaml"
+
+
+@pytest.fixture(autouse=True)
+def no_mongo(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests never open a MongoDB connection (no routes use the database yet)."""
+
+    async def fake_connect(app) -> None:
+        app.state.mongo_client = None
+        app.state.db = None
+
+    async def fake_close(app) -> None:
+        pass
+
+    monkeypatch.setattr(mongodb, "connect", fake_connect)
+    monkeypatch.setattr(mongodb, "close", fake_close)
+
 
 # nodeid -> operationIds covered, filled at collection time
 _contracts_by_test: dict[str, tuple[str, ...]] = {}
