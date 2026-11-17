@@ -67,3 +67,27 @@ jobs:
 
       - run: make audit
         working-directory: endpoints
+        
+  contract:
+    name: API contract (Schemathesis)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: endpoints/uv.lock
+
+      - run: uv sync --locked --no-install-project
+        working-directory: endpoints
+
+      # Non-blocking until the known contract mismatches are fixed.
+      # Remove continue-on-error to make it a required check.
+      - run: make contract
+        working-directory: endpoints
+        continue-on-error: true
